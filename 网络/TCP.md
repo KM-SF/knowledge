@@ -2,7 +2,7 @@
 
 * TCP数据报：
 
-  ![TCP数据报](G:\knowledge\网络\images\TCP数据报.jpg)
+  ![TCP数据报](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E6%95%B0%E6%8D%AE%E6%8A%A5.jpg)
 
   > 1. 16位源端口
   > 2. 16位目的端口
@@ -48,7 +48,7 @@
 
 # SOCKET通信模型
 
-![通信模型](G:\knowledge\网络\images\SOCKET模型创建.png)
+![通信模型](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/SOCKET%E6%A8%A1%E5%9E%8B%E5%88%9B%E5%BB%BA.png)
 
 > server:
 >
@@ -74,7 +74,7 @@
 
 三次握手时序图：  
 
-![3次握手](G:\knowledge\网络\images\TCP三次握手.jpg)
+![3次握手](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B.jpg)
 
 过程：
 
@@ -88,7 +88,7 @@
 
 四次挥手时序图：
 
-<img src="G:\knowledge\网络\images\TCP四次挥手.jpg" alt="四次挥手时序图" style="zoom:150%;" />
+<img src="https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B.jpg" alt="四次挥手时序图" style="zoom:150%;" />
 
 过程：
 
@@ -102,9 +102,9 @@
 
 # 半关闭
 
-![半关闭](G:\knowledge\网络\images\半关闭.png)
+![半关闭](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/%E5%8D%8A%E5%85%B3%E9%97%AD.png)
 
-一个套接字内部由内核借助两个缓冲区实现（一个读缓存，一个写缓存），当处于半关闭状态的时候：**只关闭了写缓存，但是连接还是存在的。**
+一个套接字内部由内核借助两个缓冲区实现（一个读缓存，一个写缓存），当处于半关闭状态的时候：**只关闭了写缓存，但是连接还是存在的，还能接收数据。**
 
 
 
@@ -112,13 +112,13 @@
 
 TCP状态转换图：
 
-![TCP状态转换图](G:\knowledge\网络\images\TCP状态转换图.jpg)
+![TCP状态转换图](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2%E5%9B%BE.jpg)
 
 
 
 过程：！！！黑体下划线为状态！！！
 
-> **建立连接 **：
+> **建立连接**：
 >
 > + 主动发起连接请求端：<u>**CLOSE**</u> --》 发送SYN --》 <u>**SEND_SYN**</u> --》 接收ACK，SYN --》 <u>**SEND_SYN**</u> --》 发送ACK --》<u>**ESTABLISHED**</u>（数据通信状态）
 >
