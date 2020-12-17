@@ -39,4 +39,5 @@ fcntl函数
 + 多线程和多进程（fork和非fork）中对fd，偏移有影响？
 + 时间轮算法
 + pthread_self获得的tid和pthread_create函数里得到tid是否会出现不一致？这两个是否有区别
++ 内存池
 
