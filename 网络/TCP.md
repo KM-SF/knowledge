@@ -140,5 +140,5 @@ C/S模型-TCP：![C/S模型-TCP](https://github.com/594301947/knowledge/blob/mas
 # 例子：
 
 + 简单例子：
-  + server.c的作用是从客户端读字符，然后将每个字符转换为大写并回送给客户端。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%96%87%E4%BB%B6/code/fork_fd.c )
-  + client.c的作用是从命令行参数中获得一个字符串发给服务器，然后接收服务器返回的字符串并打印。[客户端端代码](https://github.com/594301947/knowledge/blob/master/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%96%87%E4%BB%B6/code/fork_fd.c )
+  + server.c的作用是从客户端读字符，然后将每个字符转换为大写并回送给客户端。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/toupper_server.c)
+  + client.c的作用是从命令行参数中获得一个字符串发给服务器，然后接收服务器返回的字符串并打印。[客户端端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/toupper_client.c)
