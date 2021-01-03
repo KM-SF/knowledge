@@ -129,7 +129,7 @@ TCP状态转换图：![TCP状态转换图](https://github.com/594301947/knowledg
 
 # C/S模型-TCP
 
-C/S模型-TCP：![C/S模型-TCP](G:\knowledge\网络\images\CS模型（TCP）.png)
+C/S模型-TCP：![C/S模型-TCP](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/CS%E6%A8%A1%E5%9E%8B%EF%BC%88TCP%EF%BC%89.png)
 
 + 服务器调用socket()、bind()、listen()完成初始化后，调用accept()阻塞等待，处于监听端口的状态客户端调用socket()初始化后，调用connect()发出SYN段并阻塞等待服务器应答，服务器应答一个SYN-ACK段，客户端收到后从connect()返回，同时应答一个ACK段，服务器收到后从accept()返回。
 + 数据传输的过程：
