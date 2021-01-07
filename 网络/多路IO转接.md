@@ -40,6 +40,7 @@ timeout：定时阻塞监控时间，3种情况
         long tv_sec; /* seconds */
         long tv_usec; /* microseconds */
     };
+返回值：已触发事件fd总数（包括读写异常事件）
 ```
 
 ```C
@@ -47,5 +48,45 @@ void FD_CLR(int fd, fd_set *set); 把文件描述符集合里fd清0
 int FD_ISSET(int fd, fd_set *set); 测试文件描述符集合里fd是否置1
 void FD_SET(int fd, fd_set *set); 把文件描述符集合里fd位置1
 void FD_ZERO(fd_set *set); 把文件描述符集合里所有位清0
+```
+
+# poll
+
++ 主要思想：
+  + 初始化一个待监听的pollfdfd数组，pollfd.fd值为-1
+  + 使用数组中的一个元素作为监听fd，初始化其fd，监听的事件
+  + 调用poll，返回触发了事件的个数
+  + 遍历pollfd数组，可以通过每个元素中的revents&对应的事件，就知道该fd的该事件有没有被触发
++ 如果不再监控某个文件描述符时，可以把pollfd中，fd设置为-1，poll不再监控此pollfd，下次返回时，把revents设置为0。
++ 突破了文件描述符1024个的限制
+
+```C
+#include <poll.h>
+int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+struct pollfd {
+    int fd; /* 文件描述符 */
+    short events; /* 监控的事件 */
+    short revents; /* 监控事件中满足条件返回的事件 */
+};
+参数events可选范围：
+    POLLIN普通或带外优先数据可读,即POLLRDNORM | POLLRDBAND
+    POLLRDNORM-数据可读
+    POLLRDBAND-优先级带数据可读
+    POLLPRI 高优先级可读数据
+    POLLOUT普通或带外数据可写
+    POLLWRNORM-数据可写
+    POLLWRBAND-优先级带数据可写
+    POLLERR 发生错误
+    POLLHUP 发生挂起
+    POLLNVAL 描述字不是一个打开的文件
+    
+nfds 监控数组中有多少文件描述符需要被监控
+    
+timeout 毫秒级等待
+    -1：阻塞等，#define INFTIM -1 Linux中没有定义此宏
+    0：立即返回，不阻塞进程
+    >0：等待指定毫秒数，如当前系统时间精度不够毫秒，向上取值
+    
+返回值：触发了事件的fd总数
 ```
 
