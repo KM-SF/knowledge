@@ -15,7 +15,8 @@ void sys_err(const char *str)
     exit(1);
 }
 
-char* toupper_str(char *str) {
+char *toupper_str(char *str)
+{
 
     int index;
     for (index = 0; str[index] != '\0'; index++)
@@ -25,7 +26,7 @@ char* toupper_str(char *str) {
 
 int main()
 {
-
+    int ret = 0;
     int lfd = 0, cfd = 0;
     int read_len = 0;
     char read_buf[BUFSIZ];
@@ -42,27 +43,45 @@ int main()
     lfd = socket(AF_INET, SOCK_STREAM, 0);
     if (lfd == -1)
     {
-        sys_err("socket error\n");
+        sys_err("socket error:");
+        exit(1);
     }
 
-    bind(lfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    ret = bind(lfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (ret < 0)
+    {
+        sys_err("bind error:");
+        exit(1);
+    }
 
-    listen(lfd, 128);
+    ret = listen(lfd, 128);
+    if (ret < 0)
+    {
+        sys_err("bind error:");
+        exit(1);
+    }
 
     client_len = sizeof(client_addr);
     cfd = accept(lfd, (struct sockaddr *)&client_addr, &client_len);
     if (cfd == -1)
     {
-        sys_err("accept clien failed\n");
+        sys_err("accept clien failed:");
+        exit(1);
     }
 
     while (1)
     {
         read_len = read(cfd, read_buf, sizeof(read_buf));
+        if (read_len == 0)
+        {
+            printf("client:%s port:%d has close\n", inet_ntop(AF_INET, &client_addr, client_ip, sizeof(client_ip)), ntohs(client_addr.sin_port));
+            break;
+        }
         printf("read client:%s port:%d, read buf:%s\n", inet_ntop(AF_INET, &client_addr, client_ip, sizeof(client_ip)), ntohs(client_addr.sin_port), read_buf);
 
-        send_buf = toupper_str(read_buf);
-        write(cfd, send_buf, strlen(send_buf));
+        toupper_str(read_buf);
+        write(cfd, read_buf, read_len);
+        memset(read_buf, 0, read_len);
     }
 
     close(cfd);
