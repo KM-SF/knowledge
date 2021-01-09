@@ -57,7 +57,7 @@
 + 滑动窗口作用：告诉发送端，接收端（自己）还能接收多少数据，缓冲区的大小。控制发送方发送数据的速度，防止发送端发送数据过快，保证数据丢失
 + 从下图还可以看出，发送端是一K一K地发送数据，而接收端的应用程序可以两K两K地提走数据，当然也有可能一次提走3K或6K数据，或者一次只提走几个字节的数据，也就是说，应用程序所看到的数据是一个整体，或说是一个流（stream），在底层通讯中这些数据可能被拆成很多数据包来发送，但是一个数据包有多少字节对应用程序是不可见的，因此TCP协议是面向流的协议。而UDP是面向消息的协议，每个UDP段都是一条消息，应用程序必须以消息为单位提取数据，不能一次提取任意字节的数据，这一点和TCP是很不同的。
 
-> 滑动窗口：![滑动窗口](G:\knowledge\网络\images\滑动窗口.png)
+> 滑动窗口：![滑动窗口](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3.png)
 
 # SOCKET通信模型
 
@@ -191,8 +191,10 @@ C/S模型-TCP：![C/S模型-TCP](https://github.com/594301947/knowledge/blob/mas
 
 # 例子：
 
-+ 简单例子：
-  + server.c的作用是从客户端读字符，然后将每个字符转换为大写并回送给客户端。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/server.c)
-  + client.c的作用是从命令行参数中获得一个字符串发给服务器，然后接收服务器返回的字符串并打印。[客户端端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/client.c)
-+ 多线程服务器：
-  + [服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/thread_server.c)
+> + server.c的作用是从客户端读字符，然后将每个字符转换为大写并回送给客户端。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/server.c)
+> + client.c的作用是从命令行参数中获得一个字符串发给服务器，然后接收服务器返回的字符串并打印。[客户端端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/client.c)
+
+> 多线程服务器：主线程来监听客户端的连接，每当有一个客户端连接就新起一个线程去监听该客户端的发送消息。每个客户端一个线程监听read。主线程监听accpet。
+>
+> + [服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/thread_server.c)
+
