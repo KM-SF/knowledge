@@ -111,6 +111,7 @@ timeout 毫秒级等待
   + 将要监听的epoll_event事件添加到epoll句柄上
   + 等待触发事件epoll_wait
   + 当有事件触发时，则可以通过events事件数组得到哪些fd被触发了，就可以做对应的处理
++ 例子：[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/epoll_server.c)
 
 ```C
 头文件：#include <sys/epoll.h>
