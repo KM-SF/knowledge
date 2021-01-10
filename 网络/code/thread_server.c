@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include "err.h"
 
 #define PORT 9612
 
@@ -15,17 +16,6 @@ typedef struct
     struct sockaddr_in client_add;
 } client_info_t;
 
-void sys_err(const char *str, int errno)
-{
-    perror(str);
-    exit(errno);
-}
-
-void thread_err(const char *str, int errno)
-{
-    printf("%s :%s", str, strerror(errno));
-    exit(errno);
-}
 
 char *toupper_str(char *str)
 {
