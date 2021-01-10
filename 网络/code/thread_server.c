@@ -54,17 +54,17 @@ int init_socket()
 {
     int ret;
     int listenfd;
-    struct sockaddr_in svr_add;
+    struct sockaddr_in svr_addr;
 
-    svr_add.sin_addr.s_addr = htonl(INADDR_ANY);
-    svr_add.sin_family = AF_INET;
-    svr_add.sin_port = htons(PORT);
+    svr_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    svr_addr.sin_family = AF_INET;
+    svr_addr.sin_port = htons(PORT);
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenfd < 0)
         sys_err("listend socket failed", 1);
 
-    ret = bind(listenfd, (struct sockaddr *)&svr_add, sizeof(svr_add));
+    ret = bind(listenfd, (struct sockaddr *)&svr_addr, sizeof(svr_addr));
     if (ret < 0)
         sys_err("bind server failed", 1);
 
@@ -94,7 +94,7 @@ int main()
     int clientfd;
     socklen_t clt_len = 0;
 
-    struct sockaddr_in clt_add;
+    struct sockaddr_in clt_addr;
     pthread_attr_t attr;
 
     listenfd = init_socket();
@@ -105,8 +105,8 @@ int main()
     {
 
         pthread_t pid;
-        clt_len = sizeof(clt_add);
-        clientfd = accept(listenfd, (struct sockaddr *)&clt_add, &clt_len);
+        clt_len = sizeof(clt_addr);
+        clientfd = accept(listenfd, (struct sockaddr *)&clt_addr, &clt_len);
         if (clientfd < 0)
             sys_err("accept client failed", 1);
 
@@ -116,7 +116,7 @@ int main()
 
         memset(client_info, 0, sizeof(client_info_t));
         client_info->cfd = clientfd;
-        memcpy(&client_info->client_add, &clt_add, sizeof(struct sockaddr_in));
+        memcpy(&client_info->client_add, &clt_addr, sizeof(struct sockaddr_in));
 
         ret = pthread_create(&pid, &attr, do_work, client_info);
         if (ret)

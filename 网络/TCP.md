@@ -143,7 +143,7 @@
 
   ```C
   int opt = 1;
-  setsockopt(listenfd, SOL_SOCKET, SO_RESUSEPORT, &opt, sizeof(opt));
+  setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
   ```
 
   
