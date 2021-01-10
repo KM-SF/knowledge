@@ -13,6 +13,7 @@
 + 监听客户端连接的话，是监听listenfd的读事件
 + select能监听的文件描述符个数受限于FD_SETSIZE，一般为1024。单纯改变进程打开的文件描述符个数并不能改变select监听文件个数
 + 解决1024以下客户端时使用select是很合适的，但如果链接客户端过多，select采用的是轮询模型，会大大降低服务器响应效率，不应在select上投入更多精力。
++ 例子：[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/select_server.c)
 
 ```C
 #include <sys/select.h>
