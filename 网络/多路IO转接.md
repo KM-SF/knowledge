@@ -97,21 +97,32 @@ timeout 毫秒级等待
 # epoll
 
 + 底层实现的数据结构是红黑树
+
 + epoll是Linux下多路复用IO接口select/poll的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率，因为它会复用文件描述符集合来传递结果而不用迫使开发者每次等待事件之前都必须重新准备要被侦听的文件描述符集合
+
 + 是获取事件的时候，它无须遍历整个被侦听的描述符集，只要遍历那些被内核IO事件异步唤醒而加入Ready队列的描述符集合就行了
+
 + 优点：高效，突破1024文件描述符。能直接返回触发事件的fd
+
 + 缺点：不能跨平台
+
 + 有两种模式：
   + 水平触发（LT模式，默认模式）：当缓冲区数据可读时，就会一直触发epoll_wait函数，直到缓冲区没有可读
   + 边沿触发（ET模式）：当有客户端发送数据时，不管缓冲区的数据有没有读完都只会触发一次epoll_wait函数。只支持非阻塞模式
+  
 + 边沿触发（ET模式）：这就使得用户空间程序有可能缓存IO状态，减少epoll_wait/epoll_pwait的调用，提高应用程序效率
+
 + 主要思想：
   + 创建一个epoll句柄
   + 将设置需要监听的epoll_event事件（fd，对应的事件）
   + 将要监听的epoll_event事件添加到epoll句柄上
   + 等待触发事件epoll_wait
   + 当有事件触发时，则可以通过events事件数组得到哪些fd被触发了，就可以做对应的处理
-+ 例子：[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/epoll_server.c)
+  
++ 例子：
+
+  > +  简单例子：[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/epoll_server.c)
+  > + epoll反应堆：[epoll反应堆代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/epoll_reactor_server.c)
 
 ```C
 头文件：#include <sys/epoll.h>
