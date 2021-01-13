@@ -28,7 +28,7 @@
 
 # C/S模型-UDP
 
-C/S模型-UDP：![C/S模型-UDP](G:\knowledge\网络\images\CS模型（UDP）.png)
+C/S模型-UDP：![C/S模型-UDP](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/CS%E6%A8%A1%E5%9E%8B%EF%BC%88UDP%EF%BC%89.png)
 
 + 服务器：调用socket()、bind()、完成初始化后，调用recvfrom阻塞等待，等到某个客户端发送的数据。将数据处理完成后再发回给客户端。
 + 客户端：调用socket()完成初始化后（bind默认由系统执行），直接调用sendto发送给服务器，然后再调用recvfrom阻塞等待数据返回。
