@@ -1,5 +1,11 @@
 # 知识点
 
+* TCP：面向有链接的，双向全双工，可靠的数据包传输
+
+* 特点：稳定（数据重传），效率低，速度慢
+
+* 使用场景：大文件，重要文件
+
 * TCP数据报：![TCP数据报](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E6%95%B0%E6%8D%AE%E6%8A%A5.jpg)
 
   > 1. 16位源端口
@@ -15,6 +21,7 @@
   >    5. PSH
   >    6. RST
   > 7. 16位窗口大小：65535
+  
 * **一对客户端/服务器socket通信有3个套接字：**
 
   > 1. 客户端一个：用于跟服务器通信
@@ -191,10 +198,10 @@ C/S模型-TCP：![C/S模型-TCP](https://github.com/594301947/knowledge/blob/mas
 
 # 例子：
 
-> + server.c的作用是从客户端读字符，然后将每个字符转换为大写并回送给客户端。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/server.c)
-> + client.c的作用是从命令行参数中获得一个字符串发给服务器，然后接收服务器返回的字符串并打印。[客户端端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/client.c)
+> + server.c的作用是从客户端读字符，然后将每个字符转换为大写并回送给客户端。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/server.c)
+> + client.c的作用是从命令行参数中获得一个字符串发给服务器，然后接收服务器返回的字符串并打印。[客户端端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/client.c)
 
 > 多线程服务器：主线程来监听客户端的连接，每当有一个客户端连接就新起一个线程去监听该客户端的发送消息。每个客户端一个线程监听read。主线程监听accpet。
 >
-> + [服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/thread_server.c)
+> + [服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/thread_server.c)
 
