@@ -121,8 +121,8 @@ timeout 毫秒级等待
   
 + 例子：
 
-  > +  简单例子：[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/epoll_server.c)
-  > + epoll反应堆：[epoll反应堆代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/epoll_reactor_server.c)
+  > +  简单例子：创建epollfd->监听读事件->epoll_wait返回->执行read->处理对应的操作->write写回去->继续监听。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/epoll_server.c)
+  > + epoll反应堆：创建epollfd->监听读事件->epoll_wait返回->执行read（可读）->将读事件从树上摘下，将写事件重新挂到树上->epoll_wait返回->执行write（可写）->将写事件从树上摘下，将读事件重新挂到树上。。。（循环如此）。[epoll反应堆代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/epoll_reactor_server.c)
 
 ```C
 头文件：#include <sys/epoll.h>
@@ -177,4 +177,3 @@ timeout：是超时时间
     >0：指定微秒
     返回值：成功返回有多少文件描述符就绪，时间到时返回0，出错返回-1
 ```
-

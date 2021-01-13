@@ -1,3 +1,12 @@
+/*
+ * @Descripttion: epoll反应堆
+ * 创建epollfd->监听读事件->epoll_wait返回->执行read（可读）->将读事件从树上摘下，将写事件重新挂到树上->
+ * epoll_wait返回->执行write（可写）->将写事件从树上摘下，将读事件重新挂到树上。。。（循环如此）
+ * @Autor: km
+ * @Date: 1970-01-01 08:00:00
+ * @LastEditTime: 2021-01-13 23:08:51
+ * @FilePath: /mnt/hgfs/code/C/tcp/epoll_reactor_server.c
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/epoll.h>
@@ -11,14 +20,14 @@
 
 typedef struct
 {
-    int fd;
-    int epfd;
-    void *arg;
-    void *buf;
-    int buf_len;
-    int max_buf_len;
-    uint32_t events;
-    void *(*func)(void *arg);
+    int fd;                     // 监听的fd
+    int epfd;                   // 红黑树 epoll fd
+    void *arg;                  // 回调函数的参数
+    void *buf;                  // 收发数据buf
+    int buf_len;                // 收发数据的实际大小
+    int max_buf_len;            // 收发数据的最大大小
+    uint32_t events;            // 监听的事件
+    void *(*func)(void *arg);   // 触发的回调函数
 
 } event_data_t;
 
@@ -80,6 +89,7 @@ void init_event_data(int epfd, int fd, uint32_t events, void *(*func_cbk)(void *
     (*evt_data)->events = events;
 }
 
+
 void event_add(event_data_t *evt_data)
 {
     int ret;
@@ -99,6 +109,15 @@ void event_del(event_data_t *evt_data)
     free(evt_data);
 }
 
+
+/**
+ * @description: 先从树上摘下，再重新挂上去。修改fd对应监听的事件和回调函数
+ * @param {event_data_t} *evt_data：要改变的event_data
+ * @param {int} events：要改成的监听事件
+ * @param {void} *：要改成的回调函数
+ * @return {*}
+ * @author: km
+ */
 void event_mod(event_data_t *evt_data, int events, void *(*func_cbk)(void *arg))
 {
     int ret;
@@ -123,6 +142,12 @@ void destory_socket(int listen_fd)
     close(listen_fd);
 }
 
+/**
+ * @description: 当缓冲区可读时，从缓冲区中读取客户端发送的数据，并且将EPOLLIN事件修改为EPOLLOUT
+ * @param {*}
+ * @return {*}
+ * @author: km
+ */
 void *read_cbk(void *arg)
 {
     event_data_t *evt_data = (event_data_t *)arg;
@@ -144,6 +169,12 @@ void *read_cbk(void *arg)
     }
 }
 
+/**
+ * @description: 当缓冲区可写时，发送数据给客户端，并且将EPOLLOUT事件修改为EPOLLIN
+ * @param {*}
+ * @return {*}
+ * @author: km
+ */
 void *write_cbk(void *arg)
 {
     event_data_t *evt_data = (event_data_t *)arg;
@@ -163,6 +194,12 @@ void *write_cbk(void *arg)
     }
 }
 
+/**
+ * @description: 监听客户端的连接，收到连接后将cfd挂到epoll fd树上
+ * @param {*}
+ * @return {*}
+ * @author: km
+ */
 void *listen_cbk(void *arg)
 {
     event_data_t *evt_data = (event_data_t *)arg;
