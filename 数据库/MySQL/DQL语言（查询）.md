@@ -13,6 +13,9 @@
   5. 查询表达式：SELECT 100*98;
   6. 查询方法：SELECT version();
 
++ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E5%9F%BA%E7%A1%80%EF%BC%89.sql)！！！**
+
+
 ## 起别名
 + 语法：
   1. 字段名 AS 别名
@@ -57,7 +60,6 @@
 + 例子：
   + SELECT IFNULL(commission_pct,0 ) FROM employees;
 
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
 
 # 条件查询
 ## 条件查询
@@ -78,6 +80,8 @@
     + between and
     + in
     + is null
+
++ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E6%9D%A1%E4%BB%B6%EF%BC%89.sql)！！！**
 
 ## 按条件表达式筛选
 + 语法：arg op(条件运算符) val
@@ -151,7 +155,6 @@
   + SELECT last_name, commission_pct FROM employees WHERE commission_pct <=> NULL ;
   + SELECT last_name, salary FROM employees WHERE salary<=>12000;
 
-+ **！！+！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
 
 # 排序查询
 + 语法：SELECT 查询列表 FROM 表【where 筛选条件】ORDER BY 字段 （排序方式asc或者desc）
@@ -172,7 +175,7 @@
   + SELECT LENGTH(last_name) AS 姓名长度 FROM employees ORDER BY LENGTH(last_name); #【按照函数排序】
   + SELECT * FROM employees ORDER BY salary ASC , employee_id DESC ; #【多个字段排序】
   
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
++ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E6%8E%92%E5%BA%8F%EF%BC%89.sql)！！！**
 
 # 常见函数
 + 语法：函数名（实参列表）
@@ -187,7 +190,8 @@
     4. 其他函数
     5. 流程控制函数
   + 分组函数：传入一组参数统计一个结果返回
-
++ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E5%B8%B8%E8%A7%81%E5%87%BD%E6%95%B0%EF%BC%89.sql)！！！**
+  
 ## 字符函数
 ```
 LENGTH：获取参数值的字节个数
@@ -307,7 +311,7 @@ SELECT MOD(-10, -3); # -1
 ```
 
 ## 日期函数
-+ 日期格式化参数含义：![参数含义](G:\knowledge\网络\images\domain原理.png)
++ 日期格式化参数含义：![参数含义]([G:\knowledge\网络\images\domain原理.png](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E6%97%A5%E6%9C%9F%E6%A0%BC%E5%BC%8F%E7%AC%A6.png))
 ```
 NOW 返回当前系统日期+时间
 SELECT NOW();
@@ -408,6 +412,7 @@ FROM employees;
     4. 表达式或者函数用的比较少
     5. 也可以添加排序（排序放在整个分组查询的最后）
 
++ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E5%88%86%E7%BB%84%E6%9F%A5%E8%AF%A2%EF%BC%89.sql)！！！**
 ## 简单的分组查询
 ```
 # 查询每个工种的最高工资
