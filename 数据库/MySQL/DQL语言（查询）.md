@@ -57,7 +57,7 @@
 + 例子：
   + SELECT IFNULL(commission_pct,0 ) FROM employees;
 
-**！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
++ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
 
 # 条件查询
 ## 条件查询
@@ -151,7 +151,7 @@
   + SELECT last_name, commission_pct FROM employees WHERE commission_pct <=> NULL ;
   + SELECT last_name, salary FROM employees WHERE salary<=>12000;
 
-**！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
++ **！！+！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
 
 # 排序查询
 + 语法：SELECT 查询列表 FROM 表【where 筛选条件】ORDER BY 字段 （排序方式asc或者desc）
@@ -171,11 +171,306 @@
   + SELECT *, salary*12*(1+IFNULL(commission_pct, 0)) AS 年薪 FROM employees ORDER BY 年薪 DESC ; #【别名】
   + SELECT LENGTH(last_name) AS 姓名长度 FROM employees ORDER BY LENGTH(last_name); #【按照函数排序】
   + SELECT * FROM employees ORDER BY salary ASC , employee_id DESC ; #【多个字段排序】
-**！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
+  
++ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)！！！**
 
 # 常见函数
++ 语法：函数名（实参列表）
++ 特点：
+  + 叫什么（函数名）
+  + 干什么（函数功能）
++ 分类：
+  + 单行函数：传入一组函数进行操作，返回操作结果：
+    1. 字符函数
+    2. 数学函数
+    3. 日期函数
+    4. 其他函数
+    5. 流程控制函数
+  + 分组函数：传入一组参数统计一个结果返回
+
+## 字符函数
+```
+LENGTH：获取参数值的字节个数
+
+例子：
+SELECT LENGTH('km');
+# 一个汉字占3个字节
+SELECT LENGTH('张三丰');
+```
+
+```
+CONCAT 拼接字符串
+
+例子：
+SELECT CONCAT(last_name, '_', first_name) AS 姓名 FROM employees;
+```
+
+```
+upper：转大写
+lower：转小写
+
+例子：
+SELECT CONCAT(UPPER(last_name), '_',LOWER( first_name)) AS 姓名 FROM employees;
+```
+
+```
+substr, substring：字符串截断
+# 注意：索引都是从1开始
+
+例子：
+# 从下标开始截取到末尾
+SELECT SUBSTR('李莫愁爱上了陆展元', 7); 
+# 从下标开始截取指定字符长度的字符
+SELECT SUBSTR('李莫愁爱上了陆展元', 1, 3);
+```
+
+```
+INSRT : 返回子串第一次出现的索引，如果没有返回0
+
+例子：
+SELECT INSTR('杨不悔爱上了殷六侠', '殷六侠');
+```
+
+```
+TRIM：去掉首位的字符
+
+例子：
+SELECT TRIM('  张翠山   ');
+SELECT TRIM('a' FROM  'aaaaaa张翠山aaaaaa');
+```
+
+```
+LPAD 用指定的字符实现左填充指定长度
+RPAD 用指定的字符实现右填充指定长度
+#注意：最后返回的长度，是以传递的长度为主。
+
+例子：
+SELECT LPAD('殷素素', 12, '*');
+SELECT LPAD('殷素素', 2, '*'); #殷素
+SELECT RPAD('殷素素', 12, '*'); 
+SELECT RPAD('殷素素', 2, '*'); #殷素
+```
+
+```
+REPLACE 替换：替换所有的字符串
+
+例子：
+SELECT REPLACE('张无忌爱上了周芷若','周芷若','赵敏');
+SELECT REPLACE('周芷若张无忌爱上了周芷若','周芷若','赵敏');
+```
+
+## 数学函数
+```
+round：四舍五入
+# 第二个参数：支持小数点几位
+
+例子：
+SELECT ROUND(1.22); # 1
+SELECT ROUND(1.5); # 2
+SELECT ROUND(-1.22); # -1
+SELECT ROUND(-1.5); # -2
+SELECT ROUND(1.567, 2); #1.57
+SELECT ROUND(1, 2); # 1
+```
+
+```
+ceil 向上取整 返回>=该参数的最小值
+
+例子：
+SELECT CEIL(1.00); # 1
+SELECT CEIL(1.01); # 2
+SELECT CEIL(-1.01); # -1
+```
+
+```
+floor 向下取整，返回<=该参数的最大整数
+
+例子：
+SELECT FLOOR(-9.99); # -10
+SELECT FLOOR(1.01); # 1
+```
+
+```
+TRUNCATE ：截断小数点N位
+
+例子：
+SELECT TRUNCATE(1.666666, 1);
+```
+
+```
+mod取余
+# 公式：MOD(a,b) => a - a/b *b
+# 举例：mod(-10, -3) => -10 - (-10)/(-3) * (-3) = -1
+
+例子：
+SELECT MOD(-10, -3); # -1
+```
+
+## 日期函数
++ 日期格式化参数含义：![参数含义](G:\knowledge\网络\images\domain原理.png)
+```
+NOW 返回当前系统日期+时间
+SELECT NOW();
+
+CURDATE 返回当前系统日志，不包含时间
+SELECT CURDATE();
+
+CURTIME 返回当前时间，不包含日期
+SELECT CURTIME();
+
+可以获取指定部分，年，月，日，小时，分钟，秒
+SELECT YEAR(NOW());
+SELECT YEAR('1996-01-02');
+SELECT MONTH(now());
+SELECT MONTHNAME(NOW()); # 英文月名
+...(小时，分钟类似)
+```
+
+```
+STR_TO_DATE：将日期格式的字符转换成指定格式的日期
+
+例子：
+SELECT  STR_TO_DATE('1996-01-02', '%Y-%c-%d');
+SELECT * FROM employees WHERE hiredate = STR_TO_DATE('4-3 1992', '%c-%d %Y');
+```
+
+```
+DATE_FORMAT：将日期转换成字符
+
+例子：
+SELECT DATE_FORMAT(NOW(),'%y年%m月%d日');
+SELECT last_name ,DATE_FORMAT(hiredate, '%m月/%d日/%Y年') FROM employees;
+```
+
+## 流出控制函数
+```
+if函数：if else效果
+
+例子：
+SELECT IF(10<5, '大', '小');
+```
+
+```
+# CASE 函数
+一：switch case 的效果
+    case 要判断的字段或者表达式
+    when 常量1 then 要显示的值1或者语句1;
+    when 常量2 then 要显示的值2或者语句2;
+    ...
+    else 要显示的值N或者语句N;
+    end
+例子：
+SELECT department_id, salary AS 原始工资, 
+CASE department_id
+WHEN 30 THEN salary*1.1
+WHEN 40 THEN salary*1.2
+WHEN 50 THEN salary*1.3
+WHEN 60 THEN salary*1.4
+ELSE salary
+END AS 新工资
+FROM employees;
+
+二：类似于多重IF
+    case
+    when 条件1 then 要显示的值1或者语句1;
+    when 条件2 then 要显示的值1或者语句2;
+    when 条件3 then 要显示的值1或者语句3;
+    else 要显示的值N或者语句N;
+    end
+例子：
+SELECT salary , 
+CASE 
+WHEN salary > 20000 THEN 'A'
+WHEN salary > 15000 THEN 'B'
+WHEN salary > 10000 THEN 'C'
+ELSE 'D'
+END AS 工资级别
+FROM employees;
+```
+
 # 分组函数
-# 分组查询
+# 分组查询 
++ 语法：select 分组函数，列（要求出现在group by的后面）from 表【where 筛选条件】
+  group by 分组的列表【order by 子句】
+
++ 注意：查询列表比较特殊：要求是分组函数和group by后出现的字段
+
++ 特点：
+    1. 分组查询中的筛选条件分为两类：分组前筛选和分组后筛选
+
+    | 分类       | 数据源       | 位置            | 关键字 |
+    | ---------- | ------------ | --------------- | ------ |
+    | 分组前筛选 | 原始表       | group by 语句前 | where  |
+    | 分组后筛选 | 分组后的结果 | group by 语句后 | having |
+
+    2. 分组函数做条件肯定是放在having子句中
+    3. GROUP BY 子句支持单个字段分组，多个字段分组。（多个字段分组之间用，逗号隔开，没有先后顺序要求）
+    4. 表达式或者函数用的比较少
+    5. 也可以添加排序（排序放在整个分组查询的最后）
+
+## 简单的分组查询
+```
+# 查询每个工种的最高工资
+SELECT MAX(salary) FROM employees GROUP BY job_id;
+
+# 查询每个位置上的部门个数
+SELECT COUNT(*), location_id FROM departments GROUP BY location_id;
+```
+
+## 添加分组前的筛选条件
+```
+# 查询邮箱中包含a字符的，每个部门的平均工资
+SELECT AVG(salary) FROM employees WHERE email LIKE '%a%' GROUP BY department_id;
+
+# 查询有奖金的每个领导手下员工的最高工资
+SELECT MAX(salary) FROM employees WHERE commission_pct is NOT NULL GROUP BY manager_id;
+```
+
+## 添加分组后的筛选条件
+```
+# 查看哪个部门的员工个数>2
+# 步骤：1，2
+# 1：查询每个部门的员工个数
+SELECT COUNT(*), department_id FROM employees GROUP BY department_id;
+# 2: 根据1的结果进行筛选，查询哪个部门员工个数>2。
+SELECT COUNT(*), department_id FROM employees GROUP BY department_id HAVING COUNT(*) >2;
+
+# 查询每个工种有奖金的员工的最高工资>12000的工种编号和最高工资
+# 步骤1，2
+# 1：查询每个工种的编号和最高工资
+SELECT job_id, MAX(salary) FROM employees WHERE commission_pct is NOT  NULL  GROUP BY department_id;
+# 2：根据1的结果筛选最高工资>12000
+SELECT job_id, MAX(salary) FROM employees WHERE commission_pct is NOT  NULL  GROUP BY department_id HAVING MAX(salary)>12000;
+
+# 查询领导编号>102的每个领导手下最低工资>5000的领导编号是哪个，以及最低工资
+# 步骤1，2
+# 1：查询领导编号>102的领导及手下最低工资
+SELECT manager_id, MIN(salary) FROM employees WHERE manager_id>102 GROUP BY  manager_id;
+# 2：根据1的结果查询最低工资>5000
+SELECT manager_id, MIN(salary) FROM employees WHERE manager_id>102 GROUP BY  manager_id HAVING MIN(salary) > 5000;
+```
+
+## 按表达式或者函数分组
+```
+# 按照员工姓名长度，查询每一组的员工个数，筛选员工个数>5有哪些
+SELECT COUNT(*), LENGTH(last_name)  FROM employees GROUP BY LENGTH(last_name) HAVING COUNT(*)>5;
+# 支持别名分组
+SELECT COUNT(*) AS c, LENGTH(last_name) AS l FROM employees GROUP BY l HAVING c>5;
+```
+
+## 按照多个字段分组。
+```
+多个字段为一组，只要组里面有的字段值不一样则认为该组不一样。跟字段的前后无关
+# 查询每个部门每个工种的员工的平均工资
+SELECT AVG(salary),department_id, job_id FROM employees GROUP BY  department_id, job_id;
+```
+
+## 按照排序
+```
+# 查询每个部门每个工种的员工的平均工资，并且按照平均工资的高低显示
+SELECT AVG(salary),department_id, job_id FROM employees GROUP BY  department_id, job_id ORDER BY AVG(salary) DESC ;
+SELECT AVG(salary),department_id, job_id FROM employees WHERE department_id is NOT NULL  GROUP BY  department_id, job_id ORDER BY AVG(salary) DESC ;
+```
 # 连接查询
 # 子查询
 # 分页查询
