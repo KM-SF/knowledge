@@ -346,10 +346,23 @@ SELECT DATE_FORMAT(NOW(),'%y年%m月%d日');
 SELECT last_name ,DATE_FORMAT(hiredate, '%m月/%d日/%Y年') FROM employees;
 ```
 
+```
+DATEDIFF: 返回两个日期相差的天数
+```
+
+## 其他函数
+```
+VERSION: 当前数据库服务器的版本
+DATABASE： 当前打开的数据库
+USER：当前用户
+PASSWORD('字符串')：返回该字符的密码形式
+MD5('字符串')：返回该字符的md5加密形式
+```
+
 ## 流出控制函数
 ```
 if函数：if else效果
-
+IF(条件表达式，表达式1，表达式2)：如果条件成功，返回表达式1，否则返回表达式2
 例子：
 SELECT IF(10<5, '大', '小');
 ```
@@ -406,7 +419,7 @@ FROM employees;
   3. 可以和DISTINCT搭配使用，实现去重计算
   4. 一般用COUNT(*)统计行数 
   5. 和分组函数一同查询的字段要求是group by后的字段
-
++ + **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E5%88%86%E7%BB%84%E5%87%BD%E6%95%B0%EF%BC%89.sql)！！！**
 
 ## 简单使用
 ```
