@@ -28,7 +28,7 @@
         交叉连接
 */
 
-
+# ------------------------------------------------------------------------------
 # 一. sql92标准
 /*
 # 1. 等值连接
@@ -136,3 +136,168 @@ WHERE salary BETWEEN lowest_sal AND highest_sal;
 SELECT e.employee_id, e.last_name,  m.employee_id,  m.last_name
 FROM employees e, employees m
 WHERE e.manager_id = m.employee_id AND e.manager_id is NOT NULL ;
+
+
+#-----------------------------------------------------------------
+# 二. sql99语法
+/*
+语法：
+    select 查询列表
+    from 表1 别名 【连接类型】
+    join 表2 别名
+    on 连接条件
+    【where 筛选条件】
+    【group by 分组字段】
+    【having 分组后的筛选】
+    【order by 排序字段】
+
+内连接：inner：交集
+外连接
+    左外：left 【outer】    左表全集
+    右外：right 【outer】   右边全集
+    全外：full 【outer】    并集
+交叉连接：cross
+
+*/
+
+# 内连接
+/*
+语法：
+    select 查询列表
+    from 表1 别名 
+    inner join 表2 别名
+    on 连接条件
+    【where 筛选条件】
+    【group by 分组字段】
+    【having 分组后的筛选】
+    【order by 排序字段】
+
+分类：
+    等值
+    非等值
+    自连接
+
+特点：
+1. 添加排序，分组，筛选，多表
+2. inner可以省略
+3. 筛选条件放在where后面，连接条件放在on后面，便于阅读
+4. inner join连接和sql92语法中的等值连接效果一样，都是查询多表的交集
+*/
+
+# 1. 等值连接
+# 简单查询。多表顺序可以调换
+# 查询员工名，部门名
+SELECT last_name, d.department_id
+FROM employees e
+INNER JOIN departments d
+on e.department_id = d.department_id;
+
+# 加筛选条件
+# 查询名字中包含e的员工名和工种名
+SELECT e.last_name, j.job_title
+FROM employees e
+INNER JOIN jobs j
+ON e.job_id = j.job_id
+WHERE e.last_name LIKE '%e%';
+
+# 添加分组
+# 查询部门个数>3的城市名和部门个数
+# 1. 查询每个城市的部门个数
+# 2. 在1结果上筛选满足条件
+SELECT city, COUNT(*)
+FROM departments d
+INNER JOIN locations l
+ON d.location_id = l.location_id
+GROUP BY city
+HAVING COUNT(*) > 3;
+
+# 添加排序
+# 查询哪个部门的员工个数>3，对应的部门名和员工个数，并按照个数降序
+SELECT d.department_name, COUNT(*) 员工个数
+FROM departments d
+INNER JOIN employees e
+ON d.department_id = e.department_id
+GROUP BY d.department_id
+HAVING COUNT(*) > 3
+ORDER BY COUNT(*) DESC ;
+
+# 多表连接
+# 查询员工名，部门名，工种名，并按照部门名排序
+SELECT e.last_name, d.department_name, j.job_title
+FROM employees e
+INNER JOIN departments d ON e.department_id = d.department_id
+INNER JOIN jobs j ON e.job_id = j.job_id
+ORDER BY d.department_name DESC ;
+
+# 2. 非等值连接
+# 简单查询
+# 查询员工的工资级别
+SELECT e.last_name, e.salary, j.grade_level
+FROM employees e
+INNER JOIN job_grades j
+ON e.salary BETWEEN j.lowest_sal AND J.highest_sal;
+
+# 分组，筛选条件，排序
+# 查询工资级别个数>20的个数，并且按照工资级别降序
+SELECT j.grade_level, COUNT(*) 个数
+FROM employees e
+INNER JOIN job_grades j
+ON e.salary BETWEEN j.lowest_sal AND J.highest_sal
+GROUP BY j.grade_level
+HAVING COUNT(*) > 20
+ORDER BY j.grade_level DESC ;
+
+# 3. 自连接
+# 查询员工的名字，上级的名字
+SELECT e.last_name, m.last_name
+FROM employees e
+INNER JOIN employees m
+ON e.manager_id = m.employee_id;
+
+# 二. 外连接
+/*
+应用场景：用于查询一个表中有，另外一个表没有的记录
+
+特点：
+1. 外连接的查询结果为主表中的所有记录
+2. 如果从表中有和它匹配的，则显示匹配的值
+3. 如果从表中没有和它匹配的，则显示NULL
+4. 外连接的查询结果 = 内连接结果 + 主表中有而从表没有的记录
+5. 左外连接，left join左边的是主表
+6. 右外连接，right join右边的是主表
+7. 左外和右外交换两表的顺序，可以实现同样的效果
+8. 全外连接 = 内连接的结果 + 表1中有但是表2没有 + 表2中有但是表1没有
+*/
+# 查询没有男朋友的女神名
+# 左外连接
+SELECT *
+FROM beauty b
+LEFT JOIN boys bo
+ON b.boyfriend_id = bo.id
+WHERE bo.id IS NULL;
+
+# 右外连接
+SELECT *
+FROM boys bo
+RIGHT JOIN beauty b
+ON b.boyfriend_id = bo.id
+WHERE bo.id IS NULL;
+
+# 查询哪个部门没有员工
+SELECT d.*, e.employee_id
+FROM departments d
+LEFT JOIN employees e
+ON d.department_id = e.department_id
+WHERE e.employee_id IS NULL ;
+
+
+# 全外
+SELECT *
+FROM beauty b
+FULL JOIN boys bo
+ON b.boyfriend_id = bo.id;
+
+# 交叉连接：笛卡尔乘积 = 表1的行数*表2的行数
+ SELECT *
+ FROM beauty bo
+ cross JOIN boys b
