@@ -136,8 +136,7 @@ WHERE bo.id IS NULL ;
 # 删除语句
 + 删除：delete
 
-## 方式一：
-
++ 方式一：
   > + delete：只删除筛选出来的行数据
   > + 语法：
   >   + 单表删除：delete from 表名 where 筛选条件;
@@ -154,20 +153,18 @@ WHERE bo.id IS NULL ;
   >         on 连接条件   <br>
   >         where 筛选条件    <br>
 
-方式二：truncate：删除整个表
-语法：truncate table 表名;
-*/
++ 方式二：truncate：删除整个表。语法：truncate table 表名;
 
-DESC beauty;
-SELECT * FROM beauty;
-SELECT * FROM boys;
 
-# 方式一：delete
-# 1. 单表删除
+## 方式一：delete
+### 单表删除
+```
 # 删除手机号为9结尾的女神信息
 DELETE FROM beauty WHERE phone LIKE '%9';
+```
 
-# 2. 多表删除
+### 多表删除
+```
 # 删除张无忌的女朋友
 DELETE b
 FROM beauty b
@@ -181,7 +178,7 @@ FROM beauty b
 INNER JOIN boys bo
 ON  bo.id = b.boyfriend_id 
 WHERE bo.boyName = '黄晓明';
-
+```
 
 ## 方式二：truncate语句(清空)
 + truncate不支持条件筛选
