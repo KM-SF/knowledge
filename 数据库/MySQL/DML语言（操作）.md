@@ -1,4 +1,10 @@
+# 操作语言
+
++ 插入，更新，删除
++ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DML.sql)！！！**
+
 # 插入语句
+
 + 插入：insert
 ## 方式一：
 + 语法：insert into 表名(列名) values(值1,值2...)
@@ -73,8 +79,6 @@ SET id=19, name="刘涛", phone='18988888888';
 | 语法 | insert into 表名(列名) values(值1,值2...) | INSERT INTO 表名 SET 列名=值, 列名=值... |
 | 特性 | 支持插入多行                              | 不支持插入多行                           |
 | 特性 | 支持子查询插入                            | 不支持子查询插入                         |
-
-
 
 # 修改语句
 + 修改：update
