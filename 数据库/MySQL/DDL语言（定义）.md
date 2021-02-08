@@ -239,7 +239,7 @@ WHERE nation='中国';
 
 # 常见约束
 + 含义：一种限制，用于限制表中的数据，为了保证表中的数据的准确和可靠性
-  
+
 + 分类：六大约束
   + NOT NULL：费控，用于保证该字段的值不能为空。例如：姓名，学号等
   + DEFAULT：默认，用于保证该字段有默认值。例如：性别
@@ -249,10 +249,155 @@ WHERE nation='中国';
   + FOREIGN KEY：外检，用于限制两个表的关系。用于保证该字段的值必须来源于主表的关联列的值。在从表中添加外键约束，用于引用主表中某列的值
 
 + 添加约束的时间：
-  1. 修改表时
+  1. 创建表时
   2. 修改表时
 
 + 约束的添加分类：
   1. 列级约束：六大约束语法上都支持，但是外键约束没有效果
   2. 表级约束：除了非空，默认，其他都支持
-    
+  
++ 允许一个字段有多个约束，以空格分开
++ 查看所有索引，主键，外检，唯一：SHOW INDEX FROM 表名;
+
++ 外键特点：
+  1. 要求在从表设置外键关系
+  2. 从表的外键列的类型和主表的关联列类型要求一致或者兼容
+  3. 主表的关联列必须是一个key（一般是主键或者唯一）
+  4. 插入数据时，先插主表，再插从表
+  5. 删除数据时，先删除从表，再删除主表
+
+
+## 创建表时添加约束
+### 添加列级约束
++ 语法：直接在字段名和类型后面追加约束类型即可
++ 只支持：默认，非空，主键，唯一
+
+#### 例子
+```
+CREATE DATABASE students;
+USE students;
+CREATE TABLE stuinfo(
+    id INT PRIMARY KEY , # 主键
+    stdName VARCHAR (20) NOT NULL , # 非空
+    gender CHAR (1) CHECK(gender='男' or gender='女'), # 检查。实际没效果
+    seat INT UNIQUE , # 唯一
+    age INT DEFAULT 18 , # 默认
+    majorId INT REFERENCES major(id)  #外键。实际没效果
+);
+DESC stuinfo;
+
+CREATE TABLE major(
+    id INT PRIMARY KEY ,
+    majorName VARCHAR (20)
+);
+
+# 查看所有索引，主键，外检，唯一
+SHOW INDEX FROM stuinfo;
+```
+
+### 添加表级约束
++ 语法：在各个字段的最下面
+【CONSTRAINT 约束名】 约束类型（字段名）
+
+#### 例子 
+```
+DROP TABLE IF EXISTS stuinfo;
+CREATE TABLE stuinfo(
+    id INT , 
+    stdName VARCHAR (20) , 
+    gender CHAR (1), 
+    seat INT  , 
+    age INT, 
+    majorId INT ,
+
+    CONSTRAINT pk PRIMARY KEY (id), # 主键
+    CONSTRAINT uq UNIQUE (seat), # 唯一
+    CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id) # 外键
+);
+```
+
+### 通用写法
+```
+CREATE TABLE IF NOT EXISTS stuinfo(
+    id INT PRIMARY KEY , # 主键
+    stdName VARCHAR (20) NOT NULL , # 非空
+    gender CHAR (1) CHECK(gender='男' or gender='女'), # 检查。实际没效果
+    seat INT UNIQUE , # 唯一
+    age INT DEFAULT 18 , # 默认
+    majorId INT ,
+    CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id) # 外键
+);
+```
+
+## 修改表时添加约束
++ 添加列级约束：ALTER TABLE 表名 MODIFY COLUMN 字段名 字段类型 约束 ;
++ 添加表级约束：ALTER TABLE 表名 ADD 【CONSTRAINT 约束名】 约束类型 (字段名) 【外键的引用】;
+
+### 例子
+1. 添加非空约束
+```
+ALTER TABLE stuinfo MODIFY COLUMN stdName VARCHAR(20) NOT NULL ;
+```
+
+2. 添加默认约束
+```
+ALTER TABLE stuinfo MODIFY COLUMN  age INT DEFAULT 18;
+```
+
+3. 添加主键
+> + 列级约束
+> ```
+> ALTER TABLE stuinfo MODIFY COLUMN id INT PRIMARY KEY ;
+> ```
+> + 表级约束
+> ```
+> ALTER TABLE stuinfo ADD PRIMARY KEY (id);
+> ```
+
+4. 添加唯一
+> + 列级约束
+> ```
+> ALTER TABLE stuinfo MODIFY COLUMN seat INT UNIQUE  ;
+> ```
+> + 表级约束
+> ```
+> ALTER TABLE stuinfo ADD UNIQUE (seat);
+> ```
+
+5. 添加外键
+```
+ALTER TABLE stuinfo ADD CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id);
+```
+
+# 三。删除约束
+## 删除非空约束
++ 语法：ALTER TABLE 表名 MODIFY COLUMN 字段 字段类型 NULL ;
+```
+ALTER TABLE stuinfo MODIFY COLUMN stdName VARCHAR(20) NULL ;
+```
+
+## 删除默认约束
++ 语法：ALTER TABLE 表名 MODIFY COLUMN 字段 字段类型 ;
+```
+ALTER TABLE stuinfo MODIFY COLUMN  age INT ;
+```
+
+## 删除主键键
++ 语法：ALTER TABLE 表名 DROP PRIMARY KEY ;
+```
+ALTER TABLE stuinfo DROP PRIMARY KEY ;
+```
+
+## 删除唯一
++ 语法：ALTER TABLE 表名 DROP INDEX  约束名;
++ 注意：这里是约束名，不是字段名字。可以通过SHOW INDEX FROM 表名;查看约束名
+```
+ALTER TABLE stuinfo DROP INDEX  seat;
+```
+
+## 删除外键
++ 语法：ALTER TABLE 表名 DROP FOREIGN KEY  约束名;
++ + 注意：这里是约束名，不是字段名字。可以通过SHOW INDEX FROM 表名;查看约束名
+```
+ALTER TABLE stuinfo DROP FOREIGN KEY fk_stuinfo_major;
+```

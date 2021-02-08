@@ -347,11 +347,147 @@ SET time_zone='+9:00';
                 在从表中添加外键约束，用于引用主表中某列的值
 
 添加约束的时间：
-    1. 修改表时
+    1. 创建表时
     2. 修改表时
 
 约束的添加分类：
-    1. 列级约束：六大约束语法上都支持，但是外键约束没有效果
-    2. 表级约束：除了非空，默认，其他都支持
+    1. 列级约束：六大约束语法上都支持，但是外键约束没有效果，不能起约束名
+    2. 表级约束：除了非空，默认，其他都支持，可以起约束名
+
+允许一个字段有多个约束，以空格分开
+
+主键和唯一的比较：
+            保证唯一性      是否允许为空        一个表中可以有多少个        是否允许多个组合
+主键            true        false                   1个                     允许，但是不推荐。联合主键（所有组合字段都相同才认为相同）
+唯一            true        true                    多个                    允许，但是不推荐（所有组合字段都相同才认为相同）
+
+外键：
+    1. 要求在从表设置外键关系
+    2. 从表的外键列的类型和主表的关联列类型要求一致或者兼容
+    3. 主表的关联列必须是一个key（一般是主键或者唯一）
+    4. 插入数据时，先插主表，再插从表
+    5. 删除数据时，先删除从表，再删除主表
     
 */
+
+
+# 一。创建表时添加约束
+# 1. 添加列级约束
+/*
+语法：直接在字段名和类型后面追加约束类型即可
+只支持：默认，非空，主键，唯一
+*/
+
+CREATE DATABASE students;
+USE students;
+CREATE TABLE stuinfo(
+    id INT PRIMARY KEY , # 主键
+    stdName VARCHAR (20) NOT NULL , # 非空
+    gender CHAR (1) CHECK(gender='男' or gender='女'), # 检查。实际没效果
+    seat INT UNIQUE , # 唯一
+    age INT DEFAULT 18 , # 默认
+    majorId INT REFERENCES major(id)  #外键。实际没效果
+);
+DESC stuinfo;
+
+CREATE TABLE major(
+    id INT PRIMARY KEY ,
+    majorName VARCHAR (20)
+);
+
+# 查看所有索引，主键，外检，唯一
+SHOW INDEX FROM stuinfo;
+
+
+# 2. 添加表级约束
+/*
+语法：在各个字段的最下面
+【CONSTRAINT 约束名】 约束类型（字段名）
+*/
+DROP TABLE IF EXISTS stuinfo;
+CREATE TABLE stuinfo(
+    id INT , 
+    stdName VARCHAR (20) , 
+    gender CHAR (1), 
+    seat INT  , 
+    age INT, 
+    majorId INT ,
+
+    CONSTRAINT pk PRIMARY KEY (id), # 主键
+    CONSTRAINT uq UNIQUE (seat), # 唯一
+    CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id) # 外键
+);
+
+# 通用写法
+CREATE TABLE IF NOT EXISTS stuinfo(
+    id INT PRIMARY KEY , # 主键
+    stdName VARCHAR (20) NOT NULL , # 非空
+    gender CHAR (1) CHECK(gender='男' or gender='女'), # 检查。实际没效果
+    seat INT UNIQUE , # 唯一
+    age INT DEFAULT 18 , # 默认
+    majorId INT ,
+    CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id) # 外键
+);
+
+
+
+# 二。修改表时添加约束
+/*
+1. 添加列级约束
+ALTER TABLE 表名 MODIFY COLUMN 字段名 字段类型 约束 ;
+2. 添加表级约束
+ALTER TABLE 表名 ADD 【CONSTRAINT 约束名】 约束类型 (字段名) 【外键的引用】;
+
+*/
+DROP TABLE IF EXISTS stuinfo;
+CREATE TABLE stuinfo(
+    id INT , 
+    stdName VARCHAR (20) , 
+    gender CHAR (1), 
+    seat INT  , 
+    age INT, 
+    majorId INT 
+);
+
+DESC stuinfo;
+
+# 1. 添加非空约束
+ALTER TABLE stuinfo MODIFY COLUMN stdName VARCHAR(20) NOT NULL ;
+
+# 2. 添加默认约束
+ALTER TABLE stuinfo MODIFY COLUMN  age INT DEFAULT 18;
+
+# 3. 添加主键
+# 列级约束
+ALTER TABLE stuinfo MODIFY COLUMN id INT PRIMARY KEY ;
+# 表级约束
+ALTER TABLE stuinfo ADD PRIMARY KEY (id);
+
+# 4. 添加唯一
+# 列级约束
+ALTER TABLE stuinfo MODIFY COLUMN seat INT UNIQUE  ;
+# 表级约束
+ALTER TABLE stuinfo ADD UNIQUE (seat);
+
+# 5. 添加外键
+ALTER TABLE stuinfo ADD CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id);
+
+
+# 三。删除约束
+# 1.删除非空约束
+ALTER TABLE stuinfo MODIFY COLUMN stdName VARCHAR(20) NULL ;
+
+# 2. 删除默认约束
+ALTER TABLE stuinfo MODIFY COLUMN  age INT ;
+
+# 3. 删除主键键
+ALTER TABLE stuinfo DROP PRIMARY KEY ;
+
+# 4. 删除唯一
+ALTER TABLE stuinfo DROP INDEX  seat_2;
+
+# 5. 删除外键
+ALTER TABLE stuinfo DROP FOREIGN KEY fk_stuinfo_major;
+
+# 查看所有索引，主键，外检，唯一
+SHOW INDEX FROM stuinfo;
