@@ -369,35 +369,77 @@ ALTER TABLE stuinfo MODIFY COLUMN  age INT DEFAULT 18;
 ALTER TABLE stuinfo ADD CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id);
 ```
 
-# 三。删除约束
-## 删除非空约束
+## 删除约束
+### 删除非空约束
 + 语法：ALTER TABLE 表名 MODIFY COLUMN 字段 字段类型 NULL ;
 ```
 ALTER TABLE stuinfo MODIFY COLUMN stdName VARCHAR(20) NULL ;
 ```
 
-## 删除默认约束
+### 删除默认约束
 + 语法：ALTER TABLE 表名 MODIFY COLUMN 字段 字段类型 ;
 ```
 ALTER TABLE stuinfo MODIFY COLUMN  age INT ;
 ```
 
-## 删除主键键
+### 删除主键键
 + 语法：ALTER TABLE 表名 DROP PRIMARY KEY ;
 ```
 ALTER TABLE stuinfo DROP PRIMARY KEY ;
 ```
 
-## 删除唯一
+### 删除唯一
 + 语法：ALTER TABLE 表名 DROP INDEX  约束名;
 + 注意：这里是约束名，不是字段名字。可以通过SHOW INDEX FROM 表名;查看约束名
 ```
 ALTER TABLE stuinfo DROP INDEX  seat;
 ```
 
-## 删除外键
+### 删除外键
 + 语法：ALTER TABLE 表名 DROP FOREIGN KEY  约束名;
 + + 注意：这里是约束名，不是字段名字。可以通过SHOW INDEX FROM 表名;查看约束名
 ```
 ALTER TABLE stuinfo DROP FOREIGN KEY fk_stuinfo_major;
+```
+
+## 标识列（自增长列）
++ 含义：可以不用手动的插入值，系统提供默认的序列值
++ 特点：
+    1. 必须和一个key搭配
+    2. 一个表中只能有一个标识列
+    3. 类型只能是数值型
++ 标识列信息：SHOW VARIABLES LIKE '%auto_increment%';
+  + auto_increment_increment：步长
+  + auto_increment_offset：起始值
+  + 可以用SET KEY = VALUE修改值
+
+### 创建表时设置标识列
+```
+DROP TABLE IF EXISTS tab_identity;
+CREATE TABLE tab_identity(
+    id INT PRIMARY KEY AUTO_INCREMENT ,
+    name VARCHAR (20)
+);
+
+TRUNCATE TABLE tab_identity;
+INSERT INTO tab_identity(name) VALUES('y');
+INSERT INTO tab_identity(name) VALUES('s');
+INSERT INTO tab_identity(name) VALUES('f');
+SELECT * FROM tab_identity;
+```
+
+### 修改步长
+```
+SET auto_increment_increment = 3;
+```
+
+### 修改表时设置标识列
+```
+DESC tab_identity;
+ALTER TABLE tab_identity MODIFY COLUMN id INT AUTO_INCREMENT;
+```
+
+### 修改表时删除标识列
+```
+ALTER TABLE tab_identity MODIFY COLUMN id INT ;
 ```

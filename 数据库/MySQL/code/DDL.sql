@@ -491,3 +491,45 @@ ALTER TABLE stuinfo DROP FOREIGN KEY fk_stuinfo_major;
 
 # 查看所有索引，主键，外检，唯一
 SHOW INDEX FROM stuinfo;
+
+# 标识列
+/*
+又称为自增长列
+含义：可以不用手动的插入值，系统提供默认的序列值
+特点：
+    1. 必须和一个key搭配
+    2. 一个表中只能有一个标识列
+    3. 类型只能是数值型
+    4. auto_increment_increment：步长
+    5. auto_increment_offset：起始值
+    6. 可以用SET KEY = VALUE修改值
+*/
+
+# 一。创建表时设置标识列
+DROP TABLE IF EXISTS tab_identity;
+CREATE TABLE tab_identity(
+    id INT PRIMARY KEY AUTO_INCREMENT ,
+    name VARCHAR (20)
+);
+
+TRUNCATE TABLE tab_identity;
+INSERT INTO tab_identity(name) VALUES('y');
+INSERT INTO tab_identity(name) VALUES('s');
+INSERT INTO tab_identity(name) VALUES('f');
+SELECT * FROM tab_identity;
+
+/*
+auto_increment_increment：步长
+auto_increment_offset：起始值
+*/
+SHOW VARIABLES LIKE '%auto_increment%';
+
+# 修改步长
+SET auto_increment_increment = 3;
+
+# 二。修改表时设置标识列
+DESC tab_identity;
+ALTER TABLE tab_identity MODIFY COLUMN id INT AUTO_INCREMENT;
+
+# 三。修改表时删除标识列
+ALTER TABLE tab_identity MODIFY COLUMN id INT ;
