@@ -1,0 +1,130 @@
+# 变量
+/*
+系统变量：全局变量和会话变量
+自定义变量：用户变量和局部变量
+*/
+
+
+# 一。系统变量
+/*
+说明：变量由系统提供，不是用户定义，属于服务器层面
+语法：
+    查看所有系统变量：SHOW GLOBAL|【SESSION】 VARIABLES;(SESSION不加则是默认会话变量)
+    查看满足条件的部分系统变量：SHOW GLOBAL|【SESSION】 VARIABLES LIKE '%要查看的字符%';
+    查看指定的某个系统变量的值：SELECT @@GLOBAL|【SESSION】.系统变量
+    为某个系统变量赋值：
+        SET GLOBAL|【SESSION】 系统变量名 = 值;
+        SET @@GLOBAL|【SESSION】.系统变量 = 值;
+注意：如果是全局级别，则需要加global。如果是会话级别，则需要加session。如果不写，则默认是会话
+作用域：
+    全局变量：服务器每次启动将为所有的全局变量赋值初始化，针对所有的会话有效，但是不能跨重启
+    会话变量：静静针对当前有效
+*/
+
+# 全局变量
+# 查看所有系统变量：
+SHOW  GLOBAL VARIABLES;
+
+# 查看满足条件的部分系统变量
+SHOW GLOBAL VARIABLES LIKE '%char%';
+
+# 查看指定的某个系统变量的值
+SELECT @@GLOBAL.autocommit;
+
+# 为某个系统变量赋值：
+SET @@GLOBAL.autocommit=1;
+
+# 会话变量
+# 查看所有系统变量：
+SHOW VARIABLES;
+SHOW SESSION VARIABLES;
+
+# 查看满足条件的部分系统变量
+SHOW VARIABLES LIKE '%char%';
+
+# 查看指定的某个系统变量的值
+SELECT @@autocommit;
+
+# 为某个系统变量赋值：
+SET @@autocommit=0;
+
+
+# 二。自定义变量
+/*
+说明：变量是用户自定义的，不是由系统的
+使用步骤：
+    声明
+    赋值
+    使用
+*/
+
+
+# 1. 用户变量
+/*
+作用域：针对于当前会话有效，同于会话变量的作用于
+应用在任何地方，也就是begin end里面或者begin end外面
+
+赋值的操作符：=或者:=
+
+声明并且初始化：
+    1. SET @变量名=值;
+    2. SET @变量名:=值;
+    3. SELECT @变量名:=值;
+
+赋值（更新用户变量的值）：
+    方式一：同个SET或者SELECT
+        1. SET @变量名=值;
+        2. SET @变量名:=值;
+        3. SELECT @变量名:=值;
+    方式二：通过SELECT INTO
+        SELECT 字段 INTO @变量名 FROM 表;(结果只能一个值)
+
+查看值：SELECT @变量名;
+
+*/
+
+SET @cnt=1;
+SELECT @cnt;
+SELECT COUNT(*) INTO @cnt
+FROM employees;
+
+# 局部变量
+/*
+作用域：仅仅在定义它的begin end中有效
+应用在begin end中。且要在第一句话
+
+声明：
+    DECLARE 变量名 类型;
+    DECLARE 变量名 类型 DEFAULT 值;
+
+赋值：
+    方式一：同个SET或者SELECT
+        1. SET 变量名=值;
+        2. SET 变量名:=值;
+        3. SELECT @变量名:=值;
+    方式二：通过SELECT INTO
+        SELECT 字段 INTO 变量名 FROM 表;(结果只能一个值)
+
+查看值：SELECT 变量名;
+*/
+
+/*
+            作用域              定义和使用的位置                    语法
+用户变量    当前会话            会话中的任何地方                     必须加@符号，不用限定类型
+局部变量    BEGIN END 中        只能在BEGIN END 中，且第一句话       一般不加@符号，要加限定类型
+*/
+
+
+# 声明两个变量且初始化，求和，并打印
+# 1. 用户变量
+SET @m=1;
+SET @n=2;
+SET @sum = @m + @n;
+SELECT @sum;
+
+# 2. 局部变量(下面会报错)
+DECLARE m INT DEFAULT 1;
+DECLARE n INT DEFAULT 2;
+DECLARE sum INT ;
+SET sum = m+n;
+SELECT sum;
