@@ -397,9 +397,25 @@ ALTER TABLE stuinfo DROP INDEX  seat;
 
 ### 删除外键
 + 语法：ALTER TABLE 表名 DROP FOREIGN KEY  约束名;
-+ + 注意：这里是约束名，不是字段名字。可以通过SHOW INDEX FROM 表名;查看约束名
++ 注意：这里是约束名，不是字段名字。可以通过SHOW INDEX FROM 表名;查看约束名
 ```
 ALTER TABLE stuinfo DROP FOREIGN KEY fk_stuinfo_major;
+```
+
+#### 级联删除外键
++ 删除主表的关联键时，从表中有使用主表键的数据都被删除
++ 语法：ALTER TABLE 从表 ADD CONSTRAINT 外键名 FOREIGN KEY (从表字段) REFERENCES 主表(字段) ON DELETE CASCADE;
+```
+ALTER TABLE stuinfo ADD CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id) ON DELETE CASCADE;
+DLETE FROM major where = 3;
+```
+
+#### 级联置空
++ 删除主表的关联键时，从表中有使用主表键的数据，该字段值都设置为NULL
++ 语法：ALTER TABLE 从表 ADD CONSTRAINT 外键名 FOREIGN KEY (从表字段) REFERENCES 主表(字段) ON DELETE SET NULL;
+```
+ALTER TABLE stuinfo ADD CONSTRAINT fk_stuinfo_major FOREIGN KEY (majorId) REFERENCES major(id) ON DELETE CASCADE;
+DLETE FROM major where = 3;
 ```
 
 ## 标识列（自增长列）
