@@ -131,3 +131,86 @@ DROP PROCEDURE myp7;
 
 ## 四。查看存储过程信息
 SHOW CREATE PROCEDURE myp6;
+
+
+
+# 函数
+/*
+含义：一组预先编译好的SQL语句和集合，理解成批量处理语句
+好处：
+    1. 提高代码的重用性
+    2. 简化操作
+    3. 减少编译次数并且减少了和数据库服务器的连接次数，提高效率
+区别：
+    存储过程：可以有0个返回，也可以有多个返回。适合做批量插入，批量更新
+    函数：有且仅有1个返回，适合做处理数据后返回一个结果
+*/
+
+## 一。创建语法
+/*
+SET GLOBAL log_bin_trust_function_creators=TRUE;
+
+DELIMITER 结束符
+CREATE FUNCTION 函数名(参数列表) RETURNS 返回类型
+BEGIN 
+    函数体
+    return 值;
+END 结束符
+
+注意：
+    参数列表包含两部分：参数名和参数类型
+    函数体：肯定会有返回语句，如果没有也不会报错，但是不建议
+    函数体中有且仅有一条语句，则可以省略BEGIN END 
+    使用DELIMITER设置结束符
+*/
+
+
+## 二。调用函数
+/*
+SELECT 函数名(参数列表)
+*/
+
+### 无参数有返回
+# 返回公司的员工个数
+SET GLOBAL log_bin_trust_function_creators=TRUE;
+DELIMITER $
+CREATE FUNCTION myf1() RETURNS INT 
+BEGIN
+    DECLARE c INT DEFAULT 0; # 定义局部变量
+    SELECT COUNT(*) INTO c
+    FROM employees;
+    RETURN c;
+END $
+
+SELECT myf1()$
+
+### 有参数有返回
+# 根据员工名，返回他的工资
+CREATE FUNCTION myf2(empName VARCHAR (20)) RETURNS DOUBLE 
+BEGIN 
+    SET @sal=0; # 定义用户遍历
+    SELECT salary INTO @sal
+    FROM employees
+    WHERE last_name=empName;
+    RETURN @sal;
+END $
+SELECT * FROM employees;
+SELECT myf2('Urman')$
+
+# 根据部门名，返回该部门的平均工资
+CREATE FUNCTION myf3(deptName VARCHAR (20)) RETURNS DOUBLE 
+BEGIN 
+    DECLARE ag DOUBLE DEFAULT 0;
+    SELECT AVG(salary) INTO ag
+    FROM employees e
+    INNER JOIN departments d ON e.department_id = d.department_id
+    WHERE d.department_name=deptName;
+    RETURN ag;
+END $
+SELECT myf3('IT')$
+
+# 三。查看函数
+SHOW CREATE FUNCTION myf3;
+
+# 四。删除函数
+DROP FUNCTION myf3;
