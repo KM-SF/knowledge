@@ -1,0 +1,157 @@
+# 流程控制结构
+/*
+顺序结构：程序从上往下依次执行
+分支结构：程序从两条或多条路径中选择一条去执行
+循环结构：程序在满足一定条件的基础上，重复执行一段代码
+*/
+
+# 一。分支结构
+/*
+IF函数
+语法：IF(表达式1，表达式2，表达式3)
+执行顺序：如果表达式1成立，则if函数返回表达式2的值，否则返回表达式3的值
+*/
+
+/*
+CASE结构：
+1. 类似于switch语句，一般用于实现等值判断
+语法：
+    CASE 变量|表达式|字段
+    WHEN 要判断的值 THEN 返回的值1或者语句1;
+    WHEN 要判断的值 THEN 返回的值2或者语句2;
+    。。。
+    ELSE 返回的值N或者语句N;
+    END CASE;
+
+2. 类似于多种if语句，一般用于实现区间判断
+    CASE 
+    WHEN 要判断的条件1 THEN 返回的值1或者语句1;
+    WHEN 要判断的条件1 THEN 返回的值2或者语句2;
+    。。。
+    ELSE 返回的值N或者语句N;
+    END CASE;
+
+特点：
+    可以作为表达式，嵌套在其他语句中使用，可以放在任何地方，BEGIN END里外
+    可以作为独立的语句去执行，只能放在BEGIN END中
+    如果WHEN中的值或者条件成立，则执行对应THEN后面的语句，并且结束CASE
+    如果都不满足，则执行ELSE的语句或者值
+    ELSE可以省略，如果省略且所有WHEN条件不满足则返回NULL
+*/
+
+## 创建存储过程，根据传入的成绩，来显示成绩等级。A：90-100。B：80-90。C：60-80。D：其他
+CREATE PROCEDURE test_case(IN score INT )
+BEGIN 
+    CASE 
+    WHEN score>=90 AND score<=100 THEN SELECT 'A';
+    WHEN score>=80 THEN SELECT 'B';
+    WHEN score>=60 THEN SELECT 'C';
+    ELSE SELECT 'D';
+    END CASE ;
+END $
+CALL test_case(95)$
+
+/*
+IF结构
+IF 条件1 THEN 语句1；
+ELSEIF 条件2 THEN 语句2；
+。。。
+【ELSE 语句N;】
+END IF;
+
+应用场景：BEGIN END中
+*/
+## 创建存储过程，根据传入的成绩，来显示成绩等级。A：90-100。B：80-90。C：60-80。D：其他
+CREATE FUNCTION test_if(score INT) RETURNS CHAR 
+BEGIN  
+    IF score>=90 AND score<=100 THEN RETURN 'A';
+    ELSEIF score>=80 THEN RETURN 'B';
+    ELSEIF score>=60 THEN RETURN 'C';
+    ELSE RETURN 'D';
+    END IF ;
+END $
+SELECT test_if(90);
+
+
+# 循环结构
+/*
+分类：while，loop，repeat
+
+循环控制：
+ITERATE：类似于continue继续。跳过本次循环，进行下一次。ITERATE 标签；
+LEAVE：类似于break跳出。结束当前所有循环。LEAVE 标签；
+使用了控制必须要加标签
+*/
+
+
+/*
+while
+语法：
+【标签：】while 循环条件 DO
+    循环体；
+end while【标签】；
+*/
+
+
+/*
+loop
+语法：
+【标签：】loop
+    循环体；
+end loop【标签】；
+可以用来模拟简单的死循环
+*/
+
+
+/*
+repeat ：类似于do while
+语法：
+【标签：】repeat
+    循环体；
+until 结束循环的条件
+end repeat【标签】；
+*/
+
+## 没有添加循环控制语句
+# 批量插入，根据次数插入到admin表中多条记录
+DELIMITER $
+CREATE PROCEDURE pro_while1(IN cnt INT)
+BEGIN  
+    DECLARE i INT DEFAULT 1;
+    WHILE i <= cnt DO
+        INSERT INTO admin(username,`password`) VALUES(CONCAT('YSF',i),'123');
+        SET i=i+1;
+    END WHILE;
+END $
+
+CALL pro_while1(3)$
+SELECT * FROM admin;
+
+## 添加leave语句
+# 批量插入多条语句，超过20则停止
+CREATE PROCEDURE pro_while2(IN cnt INT)
+BEGIN  
+    DECLARE i INT DEFAULT 1;
+    a:WHILE i <= cnt DO
+        INSERT INTO admin(username,`password`) VALUES(CONCAT('YSF',i),'123');
+        IF i>20 THEN LEAVE a;
+        END IF;
+        SET i=i+1;
+    END WHILE a;
+END $
+CALL pro_while2(30)$
+
+## 添加iterate语句
+# 批量插入多条语句，只插入偶数次
+CREATE PROCEDURE pro_while3(IN cnt INT)
+BEGIN  
+    DECLARE i INT DEFAULT 0;
+    a:WHILE i <= cnt DO
+        SET i=i+1;
+        IF MOD(i,2)!=0 THEN ITERATE a;
+        END IF;
+        INSERT INTO admin(username,`password`) VALUES(CONCAT('YSF',i),'123');
+
+    END WHILE a;
+END $
+CALL pro_while3(10)$
