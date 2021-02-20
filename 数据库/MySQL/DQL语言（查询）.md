@@ -897,14 +897,27 @@ WHERE bo.id IS NULL;
 ```
 
 #### 全外
+
 ```
+# MySQL不支持
 SELECT *
 FROM beauty b
 FULL JOIN boys bo
 ON b.boyfriend_id = bo.id;
+
+# 可以用这个做到
+SELECT * FROM beauty b LEFT JOIN boys bo ON b.boyfriend_id = bo.id
+UNION
+SELECT * FROM beauty b RIGHT JOIN boys bo ON b.boyfriend_id = bo.id
+
+# 全外去掉共有部分
+SELECT * FROM beauty b LEFT JOIN boys bo ON b.boyfriend_id = bo.id where b.id is NULL
+UNION
+SELECT * FROM beauty b RIGHT JOIN boys bo ON b.boyfriend_id = bo.id where bo.id is NULL
 ```
 
 ### 交叉连接：笛卡尔乘积 = 表1的行数*表2的行数
+
 ```
  SELECT *
  FROM beauty bo
