@@ -96,7 +96,7 @@ timeout 毫秒级等待
 
 # epoll
 
-+ 底层实现的数据结构是红黑树
++ 底层实现的数据结构是：红黑树+就绪链表
 
 + epoll是Linux下多路复用IO接口select/poll的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率，因为它会复用文件描述符集合来传递结果而不用迫使开发者每次等待事件之前都必须重新准备要被侦听的文件描述符集合
 
@@ -111,6 +111,11 @@ timeout 毫秒级等待
   + 边沿触发（ET模式）：当有客户端发送数据时，不管缓冲区的数据有没有读完都只会触发一次epoll_wait函数。只支持非阻塞模式
   
 + 边沿触发（ET模式）：这就使得用户空间程序有可能缓存IO状态，减少epoll_wait/epoll_pwait的调用，提高应用程序效率
+
++ 底层实现原理：
+
+  + 当内核初始化epoll时，会开辟一块内核高速cache区，用于安置我们监听的socket，这些socket会以红黑树的形式保存在内核的cache里，以支持快速的查找，插入，删除．同时，建立了一个list链表，用于存储准备就绪的事件．所以调用epoll_wait时，在timeout时间内，只是简单的观察这个list链表是否有数据，如果没有，则睡眠至超时时间到返回；如果有数据，则在超时时间到，拷贝至用户态events数组中．
+  + 那么，这个准备就绪list链表是怎么维护的呢？当我们执行epoll_ctl时，除了把socket放到epoll文件系统里file对象对应的红黑树上之外，还会给内核中断处理程序注册一个回调函数，告诉内核，如果这个句柄的中断到了，就把它放到准备就绪list链表里。所以，当一个socket上有数据到了，内核在把网卡上的数据copy到内核中后就来把socket插入到准备就绪链表里了。
 
 + 主要思想：
   + 创建一个epoll句柄
@@ -130,6 +135,7 @@ timeout 毫秒级等待
 
 ```C
 创建一个epoll句柄，参数size用来告诉内核监听的文件描述符个数（推荐值），跟内存大小有关
+创建一个epoll文件描述符，底层同时创建一棵红黑树 and 一个就绪链表 rdlist。（红黑树存储了所有监控的文件描述符；就绪链表存储就绪文件描述符）
 int epoll_create(int size)
     
 size：告诉内核监听的数目
@@ -137,6 +143,7 @@ size：告诉内核监听的数目
 
 ```C
 控制某个epoll监控的文件描述符上的事件：注册、修改、删除
+epoll 使用“事件”的就绪通知方式，通过 epoll_ctl 注册 fd，一旦该 fd 就绪，内核就会采用类似callback 的回调机制来激活该 fd，epoll_wait 便可以收到通知
 int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
     
 epfd：为epoll_creat的句柄
@@ -165,6 +172,7 @@ events取值：
 
 ```C
 等待所监控文件描述符上有事件的产生，类似于select()调用。
+只是从就绪链表中取出元素，将该元素上的事件复制到用户态区间
 int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
     
 events：用来从内核得到事件的集合，
