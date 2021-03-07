@@ -57,6 +57,17 @@
   > 3. shutdown不考虑描述符的引用计数，直接关闭描述符。
   > 4. 如果有多个进程共享一个套接字，close每被调用一次，计数-1。直到计数为0时，也就是所有进程都被调用close时，套接字才释放
   > 5. 在多进程中如果一个进程调用shutdown函数，其他进程也会受其影响，对应的缓存区无法使用。但是一个进程close（fd）将不会影响到其他进程。
+  
+  > 发送端：
+  >
+  > + shutdown(SHUT_WR)：发送一个FIN包，并且标记该socket为SEND_SHUTDOWN
+  > + shutdown(SHUT_RD)不发送任何包，但是标记该socket为RCV_SHUTDOWN
+  >
+  > 接收端：
+  >
+  > + 收到FIN包标记该socket为RCV_SHUTDOWN
+  > + 对于epoll而言，如果一个socket同时标记位SEND_SHUTDOWN和RCV_SHUTDOWN，那么epoll会返回EPOLLHUP
+  > + 如果一个socket被标记位RCV_SHUTDOWN，则epoll会返回EPOLLRDHUP。（read == 0）
 
 # 滑动窗口
 

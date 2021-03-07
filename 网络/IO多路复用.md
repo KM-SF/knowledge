@@ -1,7 +1,7 @@
 # 概念
 
-+ 多路IO转接主要有三种模型：select，poll，epoll
-+ 多路IO转接服务器也叫多任务IO服务器。主要思想是：不再由应用程序自己监视客户端连接，取而代之由内核替换应用程序监视文件
++ IO多路复用主要有三种模型：select，poll，epoll
++ IO多路复用服务器也叫多任务IO服务器。主要思想是：不再由应用程序自己监视客户端连接，取而代之由内核替换应用程序监视文件
 
 # select
 
@@ -96,7 +96,7 @@ timeout 毫秒级等待
 
 # epoll
 
-+ 底层实现的数据结构是：红黑树+就绪链表
++ 底层实现的数据结构是：**红黑树+就绪链表**
 
 + epoll是Linux下多路复用IO接口select/poll的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率，因为它会复用文件描述符集合来传递结果而不用迫使开发者每次等待事件之前都必须重新准备要被侦听的文件描述符集合
 
@@ -108,14 +108,77 @@ timeout 毫秒级等待
 
 + 有两种模式：
   + 水平触发（LT模式，默认模式）：当缓冲区数据可读时，就会一直触发epoll_wait函数，直到缓冲区没有可读
-  + 边沿触发（ET模式）：当有客户端发送数据时，不管缓冲区的数据有没有读完都只会触发一次epoll_wait函数。只支持非阻塞模式
+  + 边沿触发（ET模式）：当有客户端发送数据时，不管缓冲区的数据有没有读完都只会触发一次epoll_wait函数。只支持非阻塞模式。
   
 + 边沿触发（ET模式）：这就使得用户空间程序有可能缓存IO状态，减少epoll_wait/epoll_pwait的调用，提高应用程序效率
 
-+ 底层实现原理：
++ **客户端跟服务端断开连接：FIN包在服务端如何检测：**
 
-  + 当内核初始化epoll时，会开辟一块内核高速cache区，用于安置我们监听的socket，这些socket会以红黑树的形式保存在内核的cache里，以支持快速的查找，插入，删除．同时，建立了一个list链表，用于存储准备就绪的事件．所以调用epoll_wait时，在timeout时间内，只是简单的观察这个list链表是否有数据，如果没有，则睡眠至超时时间到返回；如果有数据，则在超时时间到，拷贝至用户态events数组中．
-  + 那么，这个准备就绪list链表是怎么维护的呢？当我们执行epoll_ctl时，除了把socket放到epoll文件系统里file对象对应的红黑树上之外，还会给内核中断处理程序注册一个回调函数，告诉内核，如果这个句柄的中断到了，就把它放到准备就绪list链表里。所以，当一个socket上有数据到了，内核在把网卡上的数据copy到内核中后就来把socket插入到准备就绪链表里了。
+  + read() == 0，此时收到FIN包
+  + ev.events &  EPOLLRDHUP（本主机的读端 关闭了，因为对端发送了FIN包，把自己的写端关闭）
+  + ev.events &  EPOLLHUP（本主机的读写端都关闭了）
+
++ **注意事项：**
+
+  + 服务端作为客户端需要连接别的外部服务时，注册的是：EPOLLOUT事件。采用异步方式进行连接。
+
+  + 服务器作为相应客户端发送请求时，注册的是：EPOLLINT事件
+
+  + > **读操作（EPOLLINT事件）：当缓冲区可读时，触发INT事件，那么接收数据需要注意以下几点**
+    >
+    > ```
+    > if (ev.events | EPOLLINT) {
+    > 	if (n<0){
+    > 	} else if (n == 0 || ev.events & EPOLLRDHUP){
+    > 		//收到FIN包
+    > 		close(fd);
+    > 		close_read(fd); // 半关闭，看下项目是否需要支持半关闭
+    > 	} else{
+    > 		decode(buf)
+    > 		compute()
+    > 		encode()
+    > 		send
+    > 	}
+    > }
+    > ```
+    >
+    > ```
+    > int n = read(fd, buf...);
+    > if (n<0){
+    > 	1. 以非阻塞方式去读，并且缓冲区没有数据
+    > 		continue
+    > 	2. 被系统中断，进行重试 errno == EINTER
+    > 		continue
+    > }
+    > ```
+
+  + > **写操作（EPOLLOUT事件）：当缓冲区可写时，触发了OUT事件，那么发送数据时需要注意以下几点**
+    >
+    > ```
+    > if (ev.events | EPOLLOUT) {
+    > 	if (ev.data.fd == connectfd && connecting) // 正在连接外部服务，外部服务回应ACK包。用状态机表示正在连接还是发送数据
+    > 		send//发送数据
+    > 	else {
+    > 		send
+    > 	}
+    > }
+    > ```
+    >
+    > ```
+    > int n = write(fd, buf...);
+    > if (n < 0){
+    > 	1. 写缓冲区满了
+    > 	ev.evnts |= EPOLLOUT
+    > 	epoll_ctl(epfd, EPOLL_CTL_MOD,fd,&ev); // 将写时间挂到树上，由内核帮我监控写缓冲区有空间
+    > 	2. 被系统中断，进行重试 errno == EINTER
+    > 	if (LT) // 水平触发
+    > 		continue
+    > 	if (ET) // 边缘触发
+    > 		for循环继续写
+    > 	3. 以非阻塞方式去写，并且缓冲区已经满了还继续写 errno == EAGAIN or EWOULDBLOCK
+    > 		close	
+    > } 
+    > ```
 
 + 主要思想：
   + 创建一个epoll句柄
@@ -159,12 +222,21 @@ struct epoll_event {
     __uint32_t events; /* Epoll events */
     epoll_data_t data; /* User data variable */
 };
+
+typedef union epoll_data {
+    void *ptr;
+    int fd;
+    uint32_t u32;
+    uint64_t u64;
+} epoll_data_t;
+
 events取值：
-    EPOLLIN ：表示对应的文件描述符可以读（包括对端SOCKET正常关闭），当缓冲区有数据达到水位线时会触发
-    EPOLLOUT：表示对应的文件描述符可以写，当缓冲区的数据还没到达水位线，还有空间可写时
+    EPOLLIN ：表示对应的文件描述符可以读（包括对端SOCKET正常关闭），当缓冲区有数据达到水位线时会触发。需要处理发送来的FIN包，FIN包就是read返回0
+    EPOLLOUT：表示对应的文件描述符可以写，当缓冲区的数据还没到达水位线，还有空间可写时。主动向外部服务发起非阻塞tcp连接，连接建立成功后相当于可写时间
     EPOLLPRI：表示对应的文件描述符有紧急的数据可读（这里应该表示有带外数据到来）
     EPOLLERR：表示对应的文件描述符发生错误
-    EPOLLHUP：表示对应的文件描述符被挂断；
+    EPOLLHUP：表示对应的文件描述符被挂断（读写端都关闭了）；
+    EPOLLRDHUP：表示对应的文件描述符发送了FIN包，关闭了它的写端，我们的读端
     EPOLLET： 将EPOLL设为边缘触发(Edge Triggered)模式，这是相对于水平触发(Level Triggered)来说的
     EPOLLONESHOT：只监听一次事件，当监听完这次事件之后，如果还需要继续监听这个socket的话，需
     要再次把这个socket加入到EPOLL队列里
@@ -185,3 +257,15 @@ timeout：是超时时间
     >0：指定微秒
     返回值：成功返回有多少文件描述符就绪，时间到时返回0，出错返回-1
 ```
+
+# epoll原理
+
++ 原理图：![原理图](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/epoll%E5%8E%9F%E7%90%86%E5%9B%BE.png)
++ 原理：
+  + epoll_create：创建一个epoll对象。一个epoll对象主要是：一个红黑树和一个就绪队列
+  + epoll_ctl：将监听的fd挂到红黑树上，并且跟网卡驱动设置回调函数。回调函数的作用是：当网卡驱动监听到这个fd有事件发生时，将这个fd拷贝到就绪队列中
+  + epoll_wait：数据准备阶段已经完成。将就绪队列中的数据从内核空间拷贝到用户空间
++ 底层实现原理：
+
+  + 当内核初始化epoll时，会开辟一块内核高速cache区，用于安置我们监听的socket，这些socket会以红黑树的形式保存在内核的cache里，以支持快速的查找，插入，删除．同时，建立了一个list链表，用于存储准备就绪的事件．所以调用epoll_wait时，在timeout时间内，只是简单的观察这个list链表是否有数据，如果没有，则睡眠至超时时间到返回；如果有数据，则在超时时间到，拷贝至用户态events数组中．
+  + 那么，这个准备就绪list链表是怎么维护的呢？当我们执行epoll_ctl时，除了把socket放到epoll文件系统里file对象对应的红黑树上之外，还会给内核中断处理程序注册一个回调函数，告诉内核，如果这个句柄的中断到了，就把它放到准备就绪list链表里。所以，当一个socket上有数据到了，内核在把网卡上的数据copy到内核中后就来把socket插入到准备就绪链表里了。
