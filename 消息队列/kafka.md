@@ -178,9 +178,9 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
 
 + 分区作用：
 
-  + 可以分布式存储
+  + 可以分布式存储，可以解决统⼀存储⽂件过⼤的问题
   + 可以并⾏写
-  + 提高读写性能
+  + 提供了读写的吞吐量：读和写可以同时在多个分区中进⾏
 
 + 实际上是存在data/kafka-logs/test-0 和 test-1中的0000000.log⽂件中
 
@@ -284,7 +284,7 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
 
 ## 1. 同步发送
 
-生产者同步发送消息，在收到kafka的ack告知发送成功之前，会一直处理阻塞状态
+如果⽣产者发送消息没有收到ack，⽣产者会阻塞，阻塞到3s的时间，如果还没有收到消息，会进⾏重试。重试的次数3次。
 
 ## 2. 异步发送
 
@@ -298,17 +298,49 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
 2. **acks=1**： **⾄少要等待leader已经成功将数据写⼊本地log，但是不需要等待所有follower是否成功写⼊。**就可以继续发送下⼀条消息。这种情况下，如果follower没有成功备份数据，⽽此时leader⼜挂掉，则消息会丢失。
 3. **acks=-1或all**： **需要等待 min.insync.replicas(默认为1，推荐配置⼤于等于2) **。这个参数配置的副本个数都成功写⼊⽇志，这种策略会保证只要有⼀个备份存活就不会丢失数据。这是最强的数据保证。⼀般除⾮是⾦融级别，或跟钱打交道的场景才会使⽤这种配置。
 
-## 4. 其他⼀些细节
-+ 发送会默认会重试3次，每次间隔100ms
+## 4. 消费发送缓冲区
+
+![发送缓冲区](\消息队列\images\生产者发送缓冲区.png)
+
 + **发送的消息会先进⼊到本地缓冲区（32mb），kakfa会跑⼀个线程，该线程去缓冲区中取16k的数据，发送到kafka，如果到10毫秒数据没取满16k，也会发送⼀次。**
+
++ kafka默认会创建⼀个消息缓冲区，⽤来存放要发送的消息，缓冲区是32m
+
+  ```java
+  props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
+  ```
+
++ kafka本地线程会去缓冲区中⼀次拉16k的数据，发送到broker
+
+  ```java
+  props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
+  ```
+
++ 如果线程拉不到16k的数据，间隔10ms也会将已拉到的数据发到broker
+
+  ```java
+  props.put(ProducerConfig.LINGER_MS_CONFIG, 10);
+  ```
 
 # 七. 消费者
 
 ## 1. offset
 
-+ 默认自动提交offset
-+ 消费者poll到消息后默认情况下，会⾃动向broker的_consumer_offsets主题提交当前主题-分区消费的偏移量。
++ 消费者⽆论是⾃动提交还是⼿动提交，都需要把所属的消费组+消费的某个主题+消费的某个分区及消费的偏移量，这样的信息提交到集群_consumer_offsets主题⾥⾯。
+
++ 默认自动提交offset。****
+
+  ```java
+  // 是否⾃动提交offset，默认就是true
+  props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+  // ⾃动提交offset的间隔时间
+  props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "1000");
+  ```
+
+  消费者poll到消息后默认情况下，会⾃动向broker的_consumer_offsets主题提交当前主题-分区消费的偏移量。
+
 + **⾃动提交会丢消息**：因为如果消费者还没消费完poll下来的消息就⾃动提交了偏移量，那么此时消费者挂了，于是下⼀个消费者会从已提交的offset的下⼀个位置开始消费消息。之前未被消费的消息就丢失掉了。
+
 + 也可以设置手动提交（同步提交和异步提交）：
   + ⼿动同步提交offset，当前线程会阻塞直到offset提交成功
   + 异步提交offset，当前线程提交offset不会阻塞，可以继续处理后⾯的程序逻辑
@@ -323,7 +355,7 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
   props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
   ```
 
-+ 可以根据消费速度的快慢来设置，**因为如果两次poll的时间如果超出了30s的时间间隔，kafka会认为其消费能⼒过弱，将其踢出消费组。将分区分配给其他消费者。**
++ 可以根据消费速度的快慢来设置，**因为如果两次poll的时间如果超出了30s的时间间隔，kafka会认为其消费能⼒过弱，触发rebalance机制，将其踢出消费组。将分区分配给其他消费者。rebalance机制会造成性能开销**
 
   ```java
    props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 30 * 1000);
@@ -346,6 +378,8 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
   ```java
   props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10 * 1000); 
   ```
+
+## 3. 指定消费
 
 + 指定分区消费
 
@@ -377,6 +411,19 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); 
     ```
 
+## 4. 消费者的健康状态检查
+
++ 消费者每隔1s向kafka集群发送⼼跳，集群发现如果有超过10s没有续约的消费者，将被踢出消费组，触发该消费组的rebalance机制，将该分区交给消费组⾥的其他消费者进⾏消费。
+
+  ```java
+  //consumer给broker发送⼼跳的间隔时间
+  props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 1000);
+  //kafka如果超过10秒没有收到消费者的⼼跳，则会把消费者踢出消费组，进⾏rebalance，把分区分配给其他消费者。
+  props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10 * 1000);
+  ```
+
+  
+
 # 八. Kafka集群Controller、Rebalance和HW
 ## 1. Controller
 
@@ -400,6 +447,8 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最⼩的节点�
 
 ## 3. HW和LEO
 
+![HW&LEO](\消息队列\images\HW&LEO.png)
+
 + HW俗称⾼⽔位，HighWatermark的缩写，取⼀个partition对应的ISR中**最⼩的LEO(log-end-offset)作为HW，consumer最多只能消费到HW所在的位置**
 + 另外每个replica都有HW，leader和follower各⾃负责更新⾃⼰的HW的状态。**对于leader新写⼊的消息，consumer不能⽴刻消费，leader会等待该消息被所有ISR中的replicas同步后更新HW，此时消息才能被consumer消费。这样就保证了如果leader所在的broker失效，该消息仍然可以从新选举的leader中获取。**
 
@@ -421,10 +470,16 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最⼩的节点�
 ## 3. 如何做到顺序消费
 
 + 发送⽅：在发送时将ack不能设置0，关闭重试，使⽤同步发送，等到发送成功再发送下⼀条。确保消息是顺序发送的。
-
 + 接收⽅：消息是发送到⼀个分区中，只能有⼀个消费组的消费者来接收消息。
++ kafka的顺序消费使⽤场景不多，因为牺牲掉了性能，但是⽐如rocketmq在这⼀块有专⻔的功能已设计好
 
-  因此，kafka的顺序消费会牺牲掉性能。
+## 4. 如何解决消息积压问题
+
+### 消息积压问题的出现
+
+消息的消费者的消费速度远赶不上⽣产者的⽣产消息的速度，导致kafka中有⼤量的数据没有被消费。随着没有被消费的数据堆积越多，消费者寻址的性能会越来越差，最后导致整个kafka对外提供的服务的性能很差，从⽽造成其他服务也访问速度变慢，造成服务雪崩。
+
+### 消息积压的解决⽅案
 
 ## 4. 解决消息积压问题
 
@@ -435,6 +490,8 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最⼩的节点�
 + ⽅案三：让⼀个消费者去把收到的消息往另外⼀个topic上发，另⼀个topic设置多个分区和多个消费者 ，进⾏具体的业务消费。
 
 # 5. 延迟队列
+
+![延迟队列](\消息队列\images\延迟队列.png)
 
 延迟队列的应⽤场景：在订单创建成功后如果超过30分钟没有付款，则需要取消订单，此时可⽤延时队列来实现
 
