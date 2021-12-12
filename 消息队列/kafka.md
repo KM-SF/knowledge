@@ -1,6 +1,17 @@
 # 一. Kafka介绍
 
-Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（partition）、多副本的（replica），基于zookeeper（最新版已经不需要）协调的分布式消息系统，它的最⼤的特性就是可以实时的处理⼤量数据以满⾜各种需求场景。
+
+
++ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（partition）、多副本的（replica），基于zookeeper（最新版已经不需要）协调的分布式消息系统，它的最⼤的特性就是可以实时的处理⼤量数据以满⾜各种需求场景。
+
++ Kafka 是一款开源的消息引擎系统。常见的两种消息传输模型如下：
+
+  + 点对点模型
+  + 发布/订阅模型
+
++ 一个典型的 Kafka 体系架构包括若干 Producer、若干 Broker、若干 Consumer，以及一个ZooKeeper 集群，如下图所示。**其中 ZooKeeper 是 Kafka 用来负责集群元数据的管理、控制器的选举等操作的。Producer 将消息发送到 Broker，Broker 负责将收到的消息存储到磁盘中，而 Consumer 负责从 Broker 订阅并消费消息。**
+
+  ![整体架构](\消息队列\images\整体架构.png)
 
 ## Kafka的使用场景
 
@@ -18,10 +29,13 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
 | ------------- | ------------------------------------------------------------ |
 | Broker        | 消息中间件处理阶节点，一个kafka节点就是一个broker，一个或者多个broker可以组成一个kafka集群 |
 | Topic         | kafka根据topic对消息进行归类，发布到kafka集群的每条消息都需要指定一个topic |
-| Producer      | 消息生产者，向Broker发送消息的客户端                         |
-| Consumer      | 消息消费者，从Broker读取消息的客户端                         |
+| Producer      | 消息生产者，也就是发送消息的一方。生产者负责创建消息，然后将其投递到 Kafka中。 |
+| Consumer      | 消息消费者，也就是接收消息的一方，从Broker读取消息的客户端。消费者连接到 Kafka 上并接收消息，进而进行相应的业务逻辑处理。 |
 | ConsumerGroup | 每个consumer术语一个特定的ConsumerGroup，一个消息可以被多个不同的Consumer Group消费。但是一个Consumer Group只能有一个Consumer能够消费该消息 |
 | partition     | 物理上的概念，一个topic可以分为多个partition，每个partition内部消息是有序的 |
+
++ 主题是一个逻辑上的概念，它还可以细分为多个分区，一个分区只属于单个主题，很多时候也会把分区称为主题分区（Topic-Partition）。同一主题下的不同分区包含的消息是不同的，分区在存储层面可以看作一个可追加的日志（Log）文件，消息在被追加到分区日志文件的时候都会分配一个特定的偏移量（offset）。
++ offset 是消息在分区中的唯一标识，是一个单调递增且不变的值。**Kafka 通过它来保证消息在分区内的顺序性，不过 offset 并不跨越分区，也就是说，Kafka 保证的是分区有序而不是主题有序。**![offset](\消息队列\images\offset.png)
 
 + 因此从更高层面上来看，producer通过网络发送消息到kafka集群，然后Consumer桶kafka集群获取消息进行消费
 + 服务端(brokers)和客户端(producer、consumer)之间通信通过TCP协议来完成
@@ -162,8 +176,6 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
 
 ![partition](\消息队列\images\partition.png)
 
-+ ⼀个主题中的消息量是⾮常⼤的，因此可以通过分区的设置，来分布式存储这些消息。⽐如⼀个topic创建了3个分区。那么topic中的消息就会分别存放在这三个分区中。
-
 + 为⼀个主题创建多个分区
 
   ```bash
@@ -176,6 +188,10 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
   ./kafka-topics.sh --describe --zookeeper localhost:2181 --topic test1
   ```
 
++ Kafka 中的分区机制指的是将每个主题划分成多个分区（Partition），每个分区是一组有序的消息日志。生产者生产的每条消息只会被发送到一个分区中。
+
++ ⼀个主题中的消息量是⾮常⼤的，因此可以通过分区的设置，来分布式存储这些消息。⽐如⼀个topic创建了3个分区。那么topic中的消息就会分别存放在这三个分区中。
+
 + 分区作用：
 
   + 可以分布式存储，可以解决统⼀存储⽂件过⼤的问题
@@ -184,13 +200,15 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
 
 + 实际上是存在data/kafka-logs/test-0 和 test-1中的0000000.log⽂件中
 
-+ 小细节：
++ Kafka 中的分区可以分布在不同的服务器（broker）上，也就是说，一个主题可以横跨多个 broker，以此来提供比单个 broker 更强大的性能。
 
-  + 定期将⾃⼰消费分区的offset提交给kafka内部topic：__consumer_offsets，提交过去的
-    时候，key是consumerGroupId+topic+分区号，value就是当前offset的值，kafka会定
-    期清理topic⾥的消息，最后就保留最新的那条数据__
-  + 因为consumer_offsets可能会接收⾼并发的请求，kafka默认给其分配50个分区(可以
-    通过offsets.topic.num.partitions设置)，这样可以通过加机器的⽅式抗⼤并发。
+## 3. 小细节：
+
++ 每一条消息被发送到 broker 之前，会根据分区规则选择存储到哪个具体的分区。如果分区规则设定得合理，所有的消息都可以均匀地分配到不同的分区中。如果一个主题只对应一个文件，那么这个文件所在的机器 I/O 将会成为这个主题的性能瓶颈，而分区解决了这个问题。在创建主题的时候可以通过指定的参数来设置分区的个数，当然也可以在主题创建完成之后去修改分区的数量，通过增加分区的数量可以实现水平扩展。
+
++ 定期将⾃⼰消费分区的offset提交给kafka内部topic：__consumer_offsets，提交过去的时候，key是consumerGroupId+topic+分区号，value就是当前offset的值，kafka会定期清理topic⾥的消息，最后就保留最新的那条数据__
++ 因为consumer_offsets可能会接收⾼并发的请求，kafka默认给其分配50个分区(可以通过offsets.topic.num.partitions设置)，这样可以通过加机器的⽅式抗⼤并发。
++ 不考虑多副本的情况，一个分区对应一个日志（Log）。**为了防止 Log 过大，Kafka 又引入了日志分段（LogSegment）的概念，将 Log 切分为多个 LogSegment，相当于一个巨型文件被平均分配为多个相对较小的文件，这样也便于消息的维护和清理。**事实上，Log 和 LogSegment也不是纯粹物理意义上的概念，Log 在物理上只以文件夹的形式存储，而**每个 LogSegment 对应于磁盘上的一个日志文件和两个索引文件**，以及可能的其他文件（比如以“.txnindex”为后缀的事务索引文件）。下图描绘了主题、分区、副本、Log 以及 LogSegment 之间的关系。![主题-分区-Log-LogSegment](\消息队列\images\主题-分区-Log-LogSegment.png)
 
 # 五. kafka集群及副本
 
@@ -244,16 +262,51 @@ Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（p
 
 ![副本](\消息队列\images\副本.png)
 
-+ replicas：当前副本存在的broker节点
-+ leader：副本⾥的概念每个partition都有⼀个broker作为leader。**消息发送⽅要把消息发给哪个broker？就看副本的leader是在哪个broker上⾯。副本⾥的leader专⻔⽤来接收消息。接收到消息，其他follower通过poll的⽅式来同步数据。**
+#### replica
 
-+ follower：leader处理所有针对这个partition的读写请求，**⽽follower被动复制leader，不提供读写（主要是为了保证多副本数据与消费的⼀致性），如果leader所在的broker挂掉，那么就会进⾏新leader的选举**
++ 当前副本存在的broker节点，通过增加副本数量可以提升容灾能力。备份的思想，就是把相同的数据拷贝到多台机器上，而这些相同的数据拷贝在 Kafka 中被称为副本（Replica）。
+
++ 同一分区的不同副本中保存的是相同的消息（在同一时刻，副本之间并非完全一样），副本之间是“一主多从”的关系，**其中 leader 副本负责处理读写请求，follower 副本只负责与 leader 副本的消息同步。**
++ 副本处于不同的 broker 中，当**leader 副本出现故障时，从 follower 副本中重新选举新的 leader 副本对外提供服务**。Kafka 通过多副本机制实现了故障的自动转移，当Kafka 集群中某个 broker 失效时仍然能保证服务可用。
+
+#### leader
+
++ leader：副本⾥的概念每个partition都有⼀个broker作为leader。
++ **消息发送⽅要把消息发给哪个broker？就看副本的leader是在哪个broker上⾯。副本⾥的leader专⻔⽤来接收消息。接收到消息，其他follower通过poll的⽅式来同步数据。**
++ 副本负责维护和跟踪 ISR 集合中所有 follower 副本的滞后状态，当 follower 副本落后太多或失效时，leader 副本会把它从 ISR 集合中剔除。
++ 如果 OSR 集合中有 follower 副本“追上”了 leader 副本，那么 leader 副本会把它从 OSR 集合转移至 ISR 集合。
++ 默认情况下，当leader 副本发生故障时，只有在 ISR 集合中的副本才有资格被选举为新的 leader，而在 OSR集合中的副本则没有任何机会（不过这个原则也可以通过修改相应的参数配置来改变）。
+
+#### follower
+
++ leader处理所有针对这个partition的读写请求，**⽽follower被动复制leader，不提供读写（主要是为了保证多副本数据与消费的⼀致性），如果leader所在的broker挂掉，那么就会进⾏新leader的选举。**
+
+#### isr和OSR
+
++ 分区中的所有副本统称为 AR（Assigned Replicas）。
++ 所有与 leader 副本保持一定程度同步的副本（包括 leader 副本在内）组成 ISR（In-Sync Replicas），ISR 集合是 AR 集合中的一个子集。消息会先发送到 leader 副本，然后 follower 副本才能从 leader 副本中拉取消息进行同步，同步期间内 follower 副本相对于 leader 副本而言会有一定程度的滞后。
++ leader 副本同步滞后过多的副本（不包括 leader 副本）组成 OSR（Out-of-Sync Replicas），由此可见，AR=ISR+OSR。在正常情况下，所有的 follower 副本都应该与 leader 副本保持一定程度的同步，即 AR=ISR，OSR 集合为空。
 + isr：可以同步的broker节点和已同步的broker节点，存放在isr集合中。
+
+#### 那这里为什么 Kafka 不像 MySQL 和 Redis 那样允许 follwer 副本对外提供读服务呢？
+
+1. 首先，**Redis 和 MySQL 都支持主从读写分离，这和它们的使用场景有关。对于那种读操作很多而写操作相对不频繁的负载类型而言，采用读写分离是非常不错的方案**——我们可以添加很多follower 横向扩展，提升读操作性能。反观 Kafka，它的主要场景还是在消息引擎而不是以数据存储的方式对外提供读服务，通常涉及频繁地生产消息和消费消息，这不属于典型的读多写少场景，因此读写分离方案在这个场景下并不太适合。
+2. 第二，**Kafka 副本机制使用的是异步消息拉取，因此存在 leader 和 follower 之间的不一致性。**如果要采用读写分离，必然要处理副本 lag 引入的一致性问题，比如如何实现 read-your-writes、如何保证单调读（monotonic reads）以及处理消息因果顺序颠倒的问题。相反地，如果不采用读写分离，所有客户端读写请求都只在 Leader 上处理也就没有这些问题了——当然最后全局消息顺序颠倒的问题在 Kafka 中依然存在，常见的解决办法是使用单分区，其他的方案还有 version vector，但是目前 Kafka 没有提供。
+3. 第三，**主写从读无非就是为了减轻 leader 节点的压力，将读请求的负载均衡到 follower 节点，如果 Kafka 的分区相对均匀地分散到各个 broker 上，同样可以达到负载均衡的效果，没必要刻意实现主写从读增加代码实现的复杂程度。**
+
+![分区与副本](\消息队列\images\分区与副本.png)
+
+如上图所示，Kafka 集群中有 4 个 broker，某个主题中有 3 个分区，且副本因子（即副本个数）也为 3，如此每个分区便有 1 个 leader 副本和 2 个 follower 副本。生产者和消费者只与leader 副本进行交互，而 follower 副本只负责消息的同步，很多时候 follower 副本中的消息相对 leader 副本而言会有一定的滞后。
 
 ## 3. broker、主题、分区、副本
 
 + kafka集群中由多个broker组成
 + ⼀个broker中存放⼀个topic的不同partition——副本
++ 副本是在分区这个层级定义的。每个分区下可以配置若干个副本，其中只能有 1 个领导者副本和 N-1 个追随者副本。生产者向分区写入消息，每条消息在分区中的位置信息由一个叫位移（Offset）的数据来表征。
++ **Kafka 的三层消息架构：**
+  + 第一层是主题层，每个主题可以配置 M 个分区，而每个分区又可以配置 N 个副本。
+  + 第二层是分区层，每个分区的 N 个副本中只能有一个充当领导者角色，对外提供服务；其他 N-1个副本是追随者副本，只是提供数据冗余之用。
+  + 第三层是消息层，分区中包含若干条消息，每条消息的位移从 0 开始，依次递增。
 
 ![架构图](\消息队列\images\架构图.png)
 
@@ -450,7 +503,13 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最⼩的节点�
 ![HW&LEO](\消息队列\images\HW&LEO.png)
 
 + HW俗称⾼⽔位，HighWatermark的缩写，取⼀个partition对应的ISR中**最⼩的LEO(log-end-offset)作为HW，consumer最多只能消费到HW所在的位置**
-+ 另外每个replica都有HW，leader和follower各⾃负责更新⾃⼰的HW的状态。**对于leader新写⼊的消息，consumer不能⽴刻消费，leader会等待该消息被所有ISR中的replicas同步后更新HW，此时消息才能被consumer消费。这样就保证了如果leader所在的broker失效，该消息仍然可以从新选举的leader中获取。**
++ 每个replica都有HW，leader和follower各⾃负责更新⾃⼰的HW的状态。**对于leader新写⼊的消息，consumer不能⽴刻消费，leader会等待该消息被所有ISR中的replicas同步后更新HW，此时消息才能被consumer消费。这样就保证了如果leader所在的broker失效，该消息仍然可以从新选举的leader中获取。**
++ 它标识了一个特定的消息偏移量（offset），消费者只能拉取到这个 offset 之前的消息。
+
+![HW&LEO-2](\消息队列\images\HW&LEO-2.png)
+
++ 如上图所示，它代表一个日志文件，这个日志文件中有 9 条消息，第一条消息的 offset（LogStartOffset）为 0，最后一条消息的 offset 为 8，offset 为 9 的消息用虚线框表示，代表下一条待写入的消息。日志文件的 HW 为 6，表示消费者只能拉取到 offset 在 0 至 5 之间的消息，而 offset 为 6 的消息对消费者而言是不可见的。
++ LEO 是 Log End Offset 的缩写，它标识当前日志文件中下一条待写入消息的 offset，上图中offset 为 9 的位置即为当前日志文件的 LEO，LEO 的大小相当于当前日志分区中最后一条消息的offset 值加 1。**分区 ISR 集合中的每个副本都会维护自身的 LEO，而 ISR 集合中最小的 LEO即为分区的 HW，对消费者而言只能消费 HW 之前的消息。**
 
 # 九. kafka问题
 
