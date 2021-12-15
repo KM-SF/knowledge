@@ -714,7 +714,7 @@ ZooKeeper 是做什么的呢？
 
 如果允许追随者副本提供读服务，那么假设当前有 2 个追随者副本 F1 和F2，它们异步地拉取领导者副本数据。倘若 F1 拉取了 Leader 的最新消息而 F2 还未及时拉取，那么，此时如果有一个消费者先从 F1 读取消息之后又从 F2 拉取消息，它可能会看到这样的现象：第一次消费时看到的最新消息在第二次消费时不见了，这就不是单调读一致性。但是，如果所有的读请求都是由 Leader 来处理，那么 Kafka 就很容易实现单调读一致性。
 
-## 1.3 In-sync Replicas（ISR）
+### 1.3 In-sync Replicas（ISR）
 
 追随者副本不提供服务，只是定期地异步拉取领导者副本中的数据。既然是异步的，就存在着不可能与 Leader 实时同步的风险
 
@@ -739,7 +739,97 @@ Broker 端参数unclean.leader.election.enable 控制是否允许 Unclean 领导
 
 ## 2. Kafka 如何处理请求
 
+Kafka 使用的是 Reactor 模式
 
+### 2.1 Reactor
+
+Reactor 模式是事件驱动架构的一种实现方式，特别适合应用于处理多个客户端并发向服务器端发送请求的场景。Reactor 模式
+
+从这张图中，我们可以发现，多个客户端会发送请求给到 Reactor。Reactor 有个请求分发线程Dispatcher，也就是图中的 Acceptor，它会将不同的请求下发到多个工作线程中处理。在这个架构中，Acceptor 线程只是用于请求分发，不涉及具体的逻辑处理，非常得轻量级，因此有很高的吞吐量表现。而这些工作线程可以根据实际业务处理需要任意增减，从而动态调节系统负载能力。
+
+![Reactor](\消息队列\images\Reator.png)
+
+### 2.2 Kafka请求处理框架
+
+![](\消息队列\images\请求处理框架.png)
+
+Kafka 的 Broker 端有个 SocketServer 组件，类似于 Reactor 模式中的 Dispatcher，它也有对应的 Acceptor 线程和一个工作线程池，只不过在 Kafka 中，这个工作线程池有个专属的名字，叫网络线程池。Kafka 提供了 Broker 端参数 num.network.threads，用于调整该网络线程池的线程数。其默认值是 3，表示每台 Broker 启动时会创建 3 个网络线程，专门处理客户端发送的请求
+
+Acceptor 线程采用轮询的方式将入站请求公平地发到所有网络线程中，因此，在实际使用过程中，这些线程通常都有相同的几率被分配到待处理请求。这种轮询策略编写简单，同时也避免了请求处理的倾斜，有利于实现较为公平的请求处理调度。现在我们了解了客户端发来的请求会被Broker 端的 Acceptor 线程分发到任意一个网络线程中，由它们来进行处理。那么，当网络线程接收到请求后，它是怎么处理的呢？你可能会认为，它顺序处理不就好了吗？实际上，Kafka 在这个环节又做了一层异步线程池的处理，我们一起来看一看下面这张图。
+
+![](\消息队列\images\请求处理框架2.png)
+
+当网络线程拿到请求后，它不是自己处理，而是将请求放入到一个共享请求队列中。Broker 端还有个 IO 线程池，负责从该队列中取出请求，执行真正的处理。如果是 PRODUCE 生产请求，则将消息写入到底层的磁盘日志中；如果是 FETCH 请求，则从磁盘或页缓存中读取消息。IO 线程池处中的线程才是执行请求逻辑的线程。Broker 端参数 num.io.threads 控制了这个线程池中的线程数。目前该参数默认值是 8，表示每台 Broker 启动后自动创建 8 个 IO 线程处理请求。你可以根据实际硬件条件设置此线程池的个数。
+
+请求队列是所有网络线程共享的，而响应队列则是每个网络线程专属的。这么设计的原因就在于，Dispatcher 只是用于请求分发而不负责响应回传，因此只能让每个网络线程自己发送 Response给客户端，所以这些 Response 也就没必要放在一个公共的地方。
+
+我们再来看看刚刚的那张图，图中有一个叫 Purgatory 的组件，它是用来缓存延时请求（Delayed Request）的。所谓延时请求，就是那些一时未满足条件不能立刻处理的请求。比如设置了 acks=all 的 PRODUCE 请求，一旦设置了 acks=all，那么该请求就必须等待 ISR 中所有副本都接收了消息后才能返回，此时处理该请求的 IO 线程就必须等待其他 Broker 的写入结果。当请求不能立刻处理时，它就会暂存在 Purgatory 中。稍后一旦满足了完成条件，IO 线程会继续处理该请求，并将 Response 放入对应网络线程的响应队列中。
+
+### 2.3 请求类型
+
+Kafka 社区把**PRODUCE 和 FETCH 这类请求称为数据类请求**，**把 LeaderAndIsr、StopReplica 这类请求称为控制类请求。**控制类请求级别高于数据类型请求
+
+社区于2.3 版本正式实现了数据类请求和控制类请求的分离。Kafka Broker启动后，会在后台分别创建**两套**网络线程池和 IO 线程池的组合，它们分别处理数据类请求和控制类请求。至于所用的 Socket 端口，自然是使用不同的端口了，你需要提供不同的 listeners 配置，显式地指定哪套端口用于处理哪类请求。
+
+## 3. Kafka 的协调者
+
+所谓协调者，在 Kafka 中对应的术语是 Coordinator，它专门为 Consumer Group 服务，**负责为 Group 执行 Rebalance 以及提供位移管理和组成员管理等**。
+
+所有 Broker 都有各自的 Coordinator 组件
+
+那么，Consumer Group 如何确定为它服务的 Coordinator 在哪台 Broker 上呢？答案就在我们之前说过的 Kafka 内部位移主题 __consumer_offsets 身上。
+目前，Kafka 为某个 Consumer Group 确定 Coordinator 所在的 Broker 的算法有 2 个步骤。
+
+1. 第 1 步：确定由位移主题的哪个分区来保存该 Group 数据：partitionId=Math.abs(groupId.hashCode() % offsetsTopicPartitionCount)。
+2. 第 2 步：找出该分区 Leader 副本所在的 Broker，该 Broker 即为对应的 Coordinator。
+
+## 4. Kafka 的控制器
+
+控制器组件（Controller），是 Apache Kafka 的核心组件。它的主要作用是在 ApacheZookeeper 的帮助下管理和协调整个 Kafka 集群。集群中任意一台 Broker 都能充当控制器的角色，但在运行过程中，只能有一个 Broker 成为控制器，行使其管理和协调的职责。
+
+Broker 在启动时，会尝试去 Zookeeper 中创建/controller 节点。Kafka 当前选举控制器的规则是：第一个成功创建/controller 节点的 Broker 会被指定为控制器。
+
+### 4.1 控制器的功能
+
+1. 主题管理（创建，删除，增加分区）：这里的主题管理，就是指控制器帮助我们完成对 Kafka 主题的创建、删除以及分区增加的操作。
+2. 分区重分配：Kafka-reassign-partitions 脚本提供的对已有主题分区进行细粒度的分配功能。
+3. Preferred 领导者选举：Preferred 领导者选举主要是 Kafka 为了避免部分 Broker 负载过重而提供的一种换 Leader 的方案。
+4. 集群成员管理（新增 Broker，Broker 主动关闭，Broker 宕机）：自动检测新增 Broker、Broker 主动关闭及被动宕机。这种自动检测是依赖于前面提到的 Watch功能和 ZooKeeper 临时节点组合实现的。
+5. 数据服务：控制器上保存了最全的集群元数据信息，其他所有 Broker 会定期接收控制器发来的元数据更新请求，从而更新其内存中的缓存数据。
+
+### 4.2 控制器保存的数据
+
+控制器中保存的这些数据在 Zookeeper 中也保存了一份。每当控制器初始化时，它都会从Zookeeper 上读取对应的元数据并填充到自己的缓存中。这里面比较重要的数据有：
+
++ 所有主题信息。包括具体的分区信息，比如领导者副本是谁，ISR 集合中有哪些副本等。
++ 所有 Broker 信息。包括当前都有哪些运行中的 Broker，哪些正在关闭中的 Broker 等。
++ 所有涉及运维任务的分区。包括当前正在进行 Preferred 领导者选举以及分区重分配的分区列表。
+
+### 4.3 控制器故障转移（Failover）
+
+在 Kafka 集群运行过程中，只能有一台 Broker 充当控制器的角色，那么当单点失效，则需要为控制器提供故障转移功能。故障转移是指：当运行中的控制器突然宕机或意外终止时，Kafka 能够快速地感知到，并立即启用备用控制器来替代之前失败的控制器。
+
+![](\消息队列\images\故障转移.png)
+
+最开始时，Broker 0 是控制器。当 Broker 0 宕机后，ZooKeeper 通过 Watch 机制感知到并删除了 /controller 临时节点。之后，所有存活的 Broker 开始竞选新的控制器身份。Broker 3最终赢得了选举，成功地在 ZooKeeper 上重建了 /controller 节点。之后，Broker 3 会从ZooKeeper 中读取集群元数据信息，并初始化到自己的缓存中。至此，控制器的 Failover 完成，可以行使正常的工作职责了。
+
+##  Kafka 的定时器
+
+Kafka 中存在大量的延时操作，比如延时生产、延时拉取和延时删除等。基于时间轮的概念自定义实现了一个用于延时功能的定时器。JDK 中 Timer 和 DelayQueue 的插入和删除操作的平均时间复杂度为 O(nlogn) 并不能满足 Kafka 的高性能要求，而基于时间轮可以将插入和删除操作的时间复杂度都降为 O(1)。
+
+### 延时处理机制
+
+Kafka 中使用的请求被延时处理的机制是分层时间轮算法**（多层时间轮算法）**。
+
+![分层事件轮算法-1](\消息队列\images\分层事件轮算法-1.png)
+
+![](\消息队列\images\分层事件轮算法-2.png)
+
+如上图所示，Kafka 中的时间轮（TimingWheel）是一个存储定时任务的环形队列，底层采用数组实现，数组中的每个元素可以存放一个定时任务列表（TimerTaskList）。TimerTaskList 是一个环形的双向链表，链表中的每一项表示的都是定时任务项（TimerTaskEntry），其中封装了真正的定时任务（TimerTask）。
+
+时间轮由多个时间格组成，每个时间格代表当前时间轮的基本时间跨度（tickMs）。时间轮的时间格个数是固定的，可用 wheelSize 来表示，那么整个时间轮的总体时间跨度（interval）可以通过公式 tickMs×wheelSize 计算得出。时间轮还有一个表盘指针（currentTime），用来表示时间轮当前所处的时间，currentTime 是 tickMs 的整数倍。currentTime 可以将整个时间轮划分为到期部分和未到期部分，currentTime 当前指向的时间格也属于到期部分，表示刚好到期，需要处理此时间格所对应的 TimerTaskList 中的所有任务。
+
+当第一层时间轮时间不够用时，则会向上一层添加多一个时间轮。时间轮的单小格精度则是原来第一层的一整圈大小。**（多层时间轮算法）**
 
 # 十. kafka问题
 
