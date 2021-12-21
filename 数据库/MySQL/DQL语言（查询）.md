@@ -29,7 +29,7 @@
   5. 查询表达式：SELECT 100*98;
   6. 查询方法：SELECT version();
 
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E5%9F%BA%E7%A1%80%EF%BC%89.sql)！！！**
++ **！！！例子查看：[例子查看](/数据库/MySQL/code/DQL（基础）.sql)！！！**
 
 
 ## 起别名
@@ -97,7 +97,7 @@
     + in
     + is null
 
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E6%9D%A1%E4%BB%B6%EF%BC%89.sql)！！！**
++ **！！！例子查看：[例子查看](/MySQL/code/DQL（条件）.sql)！！！**
 
 ## 按条件表达式筛选
 + 语法：arg op(条件运算符) val
@@ -191,7 +191,7 @@
   + SELECT LENGTH(last_name) AS 姓名长度 FROM employees ORDER BY LENGTH(last_name); #【按照函数排序】
   + SELECT * FROM employees ORDER BY salary ASC , employee_id DESC ; #【多个字段排序】
   
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E6%8E%92%E5%BA%8F%EF%BC%89.sql)！！！**
++ **！！！例子查看：[例子查看](/数据库/MySQL/code/DQL（排序）.sql)！！！**
 
 # 常见函数
 + 语法：函数名（实参列表）
@@ -206,7 +206,7 @@
     4. 其他函数
     5. 流程控制函数
   + 分组函数：传入一组参数统计一个结果返回
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E5%B8%B8%E8%A7%81%E5%87%BD%E6%95%B0%EF%BC%89.sql)！！！**
++ **！！！例子查看：[例子查看](/数据库/MySQL/code/DQL（常见函数）.sql)！！！**
   
 ## 字符函数
 ```
@@ -327,7 +327,7 @@ SELECT MOD(-10, -3); # -1
 ```
 
 ## 日期函数
-+ 日期格式化参数含义：![参数含义]([G:\knowledge\网络\images\domain原理.png](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E6%97%A5%E6%9C%9F%E6%A0%BC%E5%BC%8F%E7%AC%A6.png))
++ 日期格式化参数含义：![参数含义](/数据库/MySQL/images/日期格式符.png)
 ```
 NOW 返回当前系统日期+时间
 SELECT NOW();
@@ -435,7 +435,7 @@ FROM employees;
   3. 可以和DISTINCT搭配使用，实现去重计算
   4. 一般用COUNT(*)统计行数 
   5. 和分组函数一同查询的字段要求是group by后的字段
-+ + **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E5%88%86%E7%BB%84%E5%87%BD%E6%95%B0%EF%BC%89.sql)！！！**
++ + **！！！例子查看：[例子查看](/数据库/MySQL/code/DQL（分组函数）.sql)！！！**
 
 ## 简单使用
 ```
@@ -514,7 +514,7 @@ SELECT AVG(salary), employee_id FROM employees;
     4. 表达式或者函数用的比较少
     5. 也可以添加排序（排序放在整个分组查询的最后）
 
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E5%88%86%E7%BB%84%E6%9F%A5%E8%AF%A2%EF%BC%89.sql)！！！**
++ **！！！例子查看：[例子查看](/数据库/MySQL/code/DQL（分组查询）.sql)！！！**
 ## 简单的分组查询
 ```
 # 查询每个工种的最高工资
@@ -599,7 +599,7 @@ SELECT AVG(salary),department_id, job_id FROM employees WHERE department_id is N
   >   + 右外连接
   >   + 全外连接
   > + 交叉连接
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DQL%EF%BC%88%E8%BF%9E%E6%8E%A5%E6%9F%A5%E8%AF%A2%EF%BC%89.sql)！！！**
++ **！！！例子查看：[例子查看](/数据库/MySQL/code/DQL（连接查询）.sql)！！！**
 
 ## sql92标准
 ### 等值连接
@@ -924,19 +924,19 @@ SELECT * FROM beauty b RIGHT JOIN boys bo ON b.boyfriend_id = bo.id where bo.id 
  cross JOIN boys b
 ```
 ## 图解
-> 内连接：![内连接](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%86%85%E8%BF%9E%E6%8E%A5.png)
+> 内连接：![内连接](/数据库/MySQL/images/内连接.png)
 
-> 左外连接：![左外连接](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%B7%A6%E5%A4%96%E8%BF%9E%E6%8E%A5.png)
+> 左外连接：![左外连接](/数据库/MySQL/images/左外连接.png)
 
-> 左外加筛选：![左外加筛选](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%B7%A6%E5%A4%96%E5%8A%A0%E7%AD%9B%E9%80%89.png)
+> 左外加筛选：![左外加筛选](/数据库/MySQL/images/左外加筛选.png)
 
-> 右外连接：![右外连接](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%8F%B3%E5%A4%96%E8%BF%9E%E6%8E%A5.png)
+> 右外连接：![右外连接](/数据库/MySQL/images/右外连接.png)
 
-> 右外加筛选：![右外加筛选](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%8F%B3%E5%A4%96%E5%8A%A0%E7%AD%9B%E9%80%89.png)
+> 右外加筛选：![右外加筛选](/数据库/MySQL/images/右外加筛选.png)
 
-> 全外连接：![全外连接](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%85%A8%E5%A4%96%E8%BF%9E%E6%8E%A5.png)
+> 全外连接：![全外连接](/数据库/MySQL/images/全外连接.png)
 
-> 全外加筛选：![全外加筛选](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%85%A8%E5%A4%96%E5%8A%A0%E7%AD%9B%E9%80%89.png)
+> 全外加筛选：![全外加筛选](/数据库/MySQL/images/全外加筛选.png)
 
 
 # 子查询

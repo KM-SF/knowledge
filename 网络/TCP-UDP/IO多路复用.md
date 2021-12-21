@@ -15,7 +15,7 @@
 + 解决1024以下客户端时使用select是很合适的，但如果链接客户端过多，select采用的是轮询模型，会大大降低服务器响应效率，不应在select上投入更多精力。
 + 缺点：监听上限受限文件描述符限制（1024），编码难度较高
 + 优点：支持跨平台
-+ 例子：[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/select_server.c)
++ 例子：[服务端代码](/网络/code/tcp/select_server.c)
 
 ```C
 #include <sys/select.h>
@@ -189,8 +189,8 @@ timeout 毫秒级等待
   
 + 例子：
 
-  > +  简单例子：创建epollfd->监听读事件->epoll_wait返回->执行read->处理对应的操作->write写回去->继续监听。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/epoll_server.c)
-  > + epoll反应堆：创建epollfd->监听读事件->epoll_wait返回->执行read（可读）->将读事件从树上摘下，将写事件重新挂到树上->epoll_wait返回->执行write（可写）->将写事件从树上摘下，将读事件重新挂到树上。。。（循环如此）。[epoll反应堆代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/epoll_reactor_server.c)
+  > +  简单例子：创建epollfd->监听读事件->epoll_wait返回->执行read->处理对应的操作->write写回去->继续监听。[服务端代码](/网络/code/tcp/epoll_server.c)
+  > + epoll反应堆：创建epollfd->监听读事件->epoll_wait返回->执行read（可读）->将读事件从树上摘下，将写事件重新挂到树上->epoll_wait返回->执行write（可写）->将写事件从树上摘下，将读事件重新挂到树上。。。（循环如此）。[epoll反应堆代码](/网络/code/tcp/epoll_reactor_server.c)
 
 ```C
 头文件：#include <sys/epoll.h>
@@ -260,7 +260,7 @@ timeout：是超时时间
 
 # epoll原理
 
-+ 原理图：![原理图](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/epoll%E5%8E%9F%E7%90%86%E5%9B%BE.png)
++ 原理图：![原理图](/网络/images/epoll原理图.png)
 + 原理：
   + epoll_create：创建一个epoll对象。一个epoll对象主要是：一个红黑树和一个就绪队列
   + epoll_ctl：将监听的fd挂到红黑树上，并且跟网卡驱动设置回调函数。回调函数的作用是：当网卡驱动监听到这个fd有事件发生时，将这个fd拷贝到就绪队列中

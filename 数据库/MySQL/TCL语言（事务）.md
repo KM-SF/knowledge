@@ -1,5 +1,5 @@
 # 事务和事务处理
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/TCL.sql)！！！**
++ **！！！例子查看：[例子查看](/数据库/MySQL/code/TCL.sql)！！！**
 
 + 事务：一个或一组sql语句组成的一个执行单元，这个执行单元要么全部执行，要么全部不执行
 
@@ -121,4 +121,4 @@ ROLLBACK TO a;
   4. 执行器生成这个操作的binlog
   5. 执行器调用引擎的事务提交接口，引擎把刚刚写完的redo改成commit状态，更新完成
 
-![两阶段提交](G:\knowledge\数据库\MySQL\images\两阶段提交.png)
+![两阶段提交](/数据库/MySQL/images/两阶段提交.png)

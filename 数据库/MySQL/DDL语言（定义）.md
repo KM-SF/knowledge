@@ -1,6 +1,6 @@
 # 库和表的管理
 + 数据定义语言（库和表的管理）
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DDL.sql)！！！**
++ **！！！例子查看：[例子查看](/数据库/MySQL/code/DDL.sql)！！！**
 
 ## 库的管理
 + 创建：create
@@ -180,7 +180,7 @@ WHERE nation='中国';
   1. 如果不设置无符号还是有符号，默认是有符号
   2. 设置有符号需要添加UNSIGNED关键字
   3. 如果插入数值超出了最大范围会报错，无法插入
-+ >  图解：![整型](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E6%95%B4%E5%9E%8B.png)
++ >  图解：![整型](/数据库/MySQL/images/整型.png)
 
 ## 小数
 + 分类：
@@ -195,7 +195,7 @@ WHERE nation='中国';
        + 如果是float和double，会根据插入的数值的精度来决定精度
     5. 定点型精度较高，如果要求插入的数值的精度较高：如货币运算等可以考虑使用
 
-+  图解：![小数](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%B0%8F%E6%95%B0.png)
++  图解：![小数](/数据库/MySQL/images/小数.png)
 
 ## 字符型
 + 较短的文本：
@@ -213,7 +213,7 @@ WHERE nation='中国';
 
 + binary和varbinary用于保存较短的二进制
 
-+  图解：![字符型](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E5%AD%97%E7%AC%A6%E5%9E%8B.png)
++  图解：![字符型](/数据库/MySQL/images/字符型.png)
 
 # 日期型
 + date：只保存日期
@@ -235,7 +235,7 @@ WHERE nation='中国';
 
 + 设置时区：SET time_zone='+9:00';
 
-+  图解：![日期型](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/images/%E6%97%A5%E6%9C%9F%E5%9E%8B.png)
++  图解：![日期型](/数据库/MySQL/images/日期型.png)
 
 # 常见约束
 + 含义：一种限制，用于限制表中的数据，为了保证表中的数据的准确和可靠性

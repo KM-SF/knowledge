@@ -1,7 +1,7 @@
 # 操作语言
 
 + 插入，更新，删除
-+ **！！！例子查看：[例子查看](https://github.com/594301947/knowledge/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/code/DML.sql)！！！**
++ **！！！例子查看：[例子查看](/数据库/MySQL/code/DML.sql)！！！**
 
 # 插入语句
 

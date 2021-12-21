@@ -6,7 +6,7 @@
 
 * 使用场景：大文件，重要文件
 
-* TCP数据报：![TCP数据报](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E6%95%B0%E6%8D%AE%E6%8A%A5.jpg)
+* TCP数据报：![TCP数据报](/网络/images/TCP数据报.jpg)
 
   > 1. 16位源端口
   > 2. 16位目的端口
@@ -75,11 +75,11 @@
 + 滑动窗口作用：告诉发送端，接收端（自己）还能接收多少数据，缓冲区的大小。控制发送方发送数据的速度，防止发送端发送数据过快，保证数据丢失
 + 从下图还可以看出，发送端是一K一K地发送数据，而接收端的应用程序可以两K两K地提走数据，当然也有可能一次提走3K或6K数据，或者一次只提走几个字节的数据，也就是说，应用程序所看到的数据是一个整体，或说是一个流（stream），在底层通讯中这些数据可能被拆成很多数据包来发送，但是一个数据包有多少字节对应用程序是不可见的，因此TCP协议是面向流的协议。而UDP是面向消息的协议，每个UDP段都是一条消息，应用程序必须以消息为单位提取数据，不能一次提取任意字节的数据，这一点和TCP是很不同的。
 
-> 滑动窗口：![滑动窗口](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3.png)
+> 滑动窗口：![滑动窗口](/网络/images/滑动窗口.png)
 
 # SOCKET通信模型
 
-![通信模型](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/SOCKET%E6%A8%A1%E5%9E%8B%E5%88%9B%E5%BB%BA.png)
+![通信模型](/网络/images/SOCKET模型创建.png)
 
 > server:
 >
@@ -103,7 +103,7 @@
 
 三次握手时序图：  
 
-![3次握手](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B.jpg)
+![3次握手](/网络/images/TCP三次握手.jpg)
 
 过程：
 
@@ -115,7 +115,7 @@
 
 四次挥手时序图：
 
-<img src="https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B.jpg" alt="四次挥手时序图" style="zoom:150%;" />
+![4次挥手](/网络/images/TCP四次挥手.jpg)
 
 过程：
 
@@ -149,7 +149,7 @@
       SHUT_RDWR:相当于调用shutdown两次：首先是以SHUT_RD,然后以SHUT_WR
   ```
 
-> 半关闭：![半关闭](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/%E5%8D%8A%E5%85%B3%E9%97%AD.png)
+> 半关闭：![半关闭](/网络/images/半关闭.png)
 
 # 端口复用
 
@@ -181,7 +181,7 @@
 
 # TCP状态转换图
 
-TCP状态转换图：![TCP状态转换图](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/TCP%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2%E5%9B%BE.jpg)
+TCP状态转换图：![TCP状态转换图](/网络/images/TCP状态转换图.jpg)
 
 过程：！！！黑体下划线为状态！！！
 
@@ -212,7 +212,7 @@ TCP状态转换图：![TCP状态转换图](https://github.com/594301947/knowledg
 
 # C/S模型-TCP
 
-C/S模型-TCP：![C/S模型-TCP](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/CS%E6%A8%A1%E5%9E%8B%EF%BC%88TCP%EF%BC%89.png)
+C/S模型-TCP：![C/S模型-TCP](/网络/images/CS模型（TCP）.png)
 
 + 服务器调用socket()、bind()、listen()完成初始化后，调用accept()阻塞等待，处于监听端口的状态客户端调用socket()初始化后，调用connect()发出SYN段并阻塞等待服务器应答，服务器应答一个SYN-ACK段，客户端收到后从connect()返回，同时应答一个ACK段，服务器收到后从accept()返回。
 + 数据传输的过程：
@@ -222,11 +222,11 @@ C/S模型-TCP：![C/S模型-TCP](https://github.com/594301947/knowledge/blob/mas
 
 # 例子：
 
-> + server.c的作用是从客户端读字符，然后将每个字符转换为大写并回送给客户端。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/server.c)
-> + client.c的作用是从命令行参数中获得一个字符串发给服务器，然后接收服务器返回的字符串并打印。[客户端端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/client.c)
+> + server.c的作用是从客户端读字符，然后将每个字符转换为大写并回送给客户端。[服务端代码](/网络/code/tcp/server.c)
+> + client.c的作用是从命令行参数中获得一个字符串发给服务器，然后接收服务器返回的字符串并打印。[客户端端代码](/网络/code/tcp/client.c)
 
-> 多线程服务器：主线程来监听客户端的连接，每当有一个客户端连接就新起一个线程去监听该客户端的发送消息。每个客户端一个线程监听read。主线程监听accpet。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/thread_server.c)
+> 多线程服务器：主线程来监听客户端的连接，每当有一个客户端连接就新起一个线程去监听该客户端的发送消息。每个客户端一个线程监听read。主线程监听accpet。[服务端代码](/网络/code/tcp/thread_server.c)
 >
 
-> 多进程服务器：主进程先fork一个子进程去监听客户端登录，然后主进程去回收子进程资源。当有客户端登录时则再fork一个进程专门处理这个客户端的read和write。[服务端代码](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/code/tcp/process_server.c)
+> 多进程服务器：主进程先fork一个子进程去监听客户端登录，然后主进程去回收子进程资源。当有客户端登录时则再fork一个进程专门处理这个客户端的read和write。[服务端代码](/网络/code/tcp/process_server.c)
 

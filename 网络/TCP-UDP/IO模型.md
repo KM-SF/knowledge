@@ -6,20 +6,20 @@
 
 ## 阻塞
 
-+ 阻塞IO模型：![阻塞](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/IO%E6%A8%A1%E5%9E%8B-%E9%98%BB%E5%A1%9E.png)
++ 阻塞IO模型：![阻塞](/网络/images/IO模型-阻塞.png)
 + 阻塞：IO函数在数据未到达时没有立刻返回（读IO：读缓冲区没有数据。写IO：写缓冲区没有空间）
 + 阻塞IO模型：当调用IO函数后，IO函数不会立刻返回。系统内核会处于两个阶段。这两个阶段都是阻塞的 
 
 ## 非阻塞
 
-+ 非阻塞IO模型：![非阻塞](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/IO%E6%A8%A1%E5%9E%8B-%E9%9D%9E%E9%98%BB%E5%A1%9E.png)
++ 非阻塞IO模型：![非阻塞](/网络/images/IO模型-非阻塞.png)
 
 + 非阻塞：当调用IO函数后，IO函数立刻返回。（不关注缓冲区是否可读可写）
 + 非阻塞IO模型：此时数据准备阶段时非阻塞的，即缓冲区不可读不可写也立即返回。当调用IO函数时，缓冲区可读可写时，数据拷贝阶段是阻塞的，阻塞数据从内核缓冲区拷贝到用户缓冲区
 
 ## IO多路复用
 
-+ IO多路复用模型：![O多路复用模型](https://github.com/594301947/knowledge/blob/master/%E7%BD%91%E7%BB%9C/images/IO%E6%A8%A1%E5%9E%8B-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8.png)
++ IO多路复用模型：![O多路复用模型](/网络/images/IO模型-IO多路复用.png)
 + IO多路复用：
   + 当我们调用select/poll/epoll函数监听fd时，系统内核会阻塞在数据准备阶段（可以设置为非阻塞）。
   + 当监听fd的缓冲区数据准备好后，就会返回，直接调用io函数
