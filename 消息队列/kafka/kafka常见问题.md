@@ -37,7 +37,7 @@
 
 # 5. 延迟队列
 
-![延迟队列](/消息队列/images/延迟队列.png)
+![延迟队列](/消息队列/kafka/images/延迟队列.png)
 
 延迟队列的应⽤场景：在订单创建成功后如果超过30分钟没有付款，则需要取消订单，此时可⽤延时队列来实现
 
@@ -107,7 +107,7 @@ kafka是一个流式数据处理平台，他具有消息系统的能力，也有
 8. 根据分区Leader节点所在的broker节点，和这些broker分别创建连接
 9. 最后开始消费消息
 
-![](/消息队列/images/kafka通信机制.webp)
+![](/消息队列/kafka/images/kafka通信机制.webp)
 
 ## 10. 那么发送消息时如何选择分区的？
 
@@ -146,7 +146,7 @@ Kafka中的消费者组订阅topic主题的消息，一般来说消费者的数�
 
 所以，消费者组的好处一方面在上面说到过，可以支持多种消息模型，另外的话根据消费者和分区的消费关系，支撑横向扩容伸缩。
 
-![图片](/消息队列/images/消费者和分区.webp)
+![图片](/消息队列/kafka/images/消费者和分区.webp)
 
 当我们知道消费者如何消费分区的时候，就显然会有一个问题出现了，消费者消费的分区是怎么分配的，有先加入的消费者时候怎么办？
 
@@ -168,7 +168,7 @@ Kafka中的消费者组订阅topic主题的消息，一般来说消费者的数�
 2. 群主执行分区分配策略，然后把分配结果通过`SyncGroup`请求发送给协调者，协调者收到分区分配结果
 3. 其他组内成员也向协调者发送`SyncGroup`，协调者把每个消费者的分区分配分别响应给他们
 
-![图片](/消息队列/images/rebalance机制.webp)
+![图片](/消息队列/kafka/images/rebalance机制.webp)
 
 ## 13. 分区分配策略
 
@@ -182,13 +182,13 @@ Kafka中的消费者组订阅topic主题的消息，一般来说消费者的数�
 >
 > 如果是4个分区的话，那么他们会刚好都是分配到2个。
 >
-> <img src="/消息队列/images/Range.webp" alt="图片" style="zoom:50%;" />
+> <img src="/消息队列/kafka/images/Range.webp" alt="图片" style="zoom:50%;" />
 >
 > 但是这个分配策略会有点小问题，他是根据主题进行分配，所以如果消费者组订阅了多个主题，那就有可能导致分区分配不均衡。
 >
 > 比如下图中两个主题的P0\P1都被分配给了A，这样A有4个分区，而B只有2个，如果这样的主题数量越多，那么不均衡就越严重。
 >
-> <img src="/消息队列/images/Range不均衡.webp" alt="图片" style="zoom:50%;" />
+> <img src="/消息队列/kafka/images/Range不均衡.webp" alt="图片" style="zoom:50%;" />
 
 >**RoundRobin**
 >
@@ -198,7 +198,7 @@ Kafka中的消费者组订阅topic主题的消息，一般来说消费者的数�
 >
 >P0->A，P1->B，P1->A。。。以此类推
 >
-><img src="/消息队列/images/RoundRobin.webp" alt="图片" style="zoom:50%;" />
+><img src="/消息队列/kafka/images/RoundRobin.webp" alt="图片" style="zoom:50%;" />
 
 > **Sticky**
 >
@@ -272,7 +272,7 @@ ISR是一个动态的集合，维持这个集合会通过`replica.lag.time.max.m
 
 **LEO（Log End Offset）**：下一条待写入消息的位移
 
-![](/消息队列/images/HW&LEO-2.png)
+![](/消息队列/kafka/images/HW&LEO-2.png)
 
 #### 同步
 
@@ -280,19 +280,19 @@ ISR是一个动态的集合，维持这个集合会通过`replica.lag.time.max.m
 
 1. 生产者不停地向Leader写入数据，这时候Leader的LEO可能已经达到了10，但是HW依然是0，两个Follower向Leader请求同步数据，他们的值都是0。
 
-<img src="/消息队列/images/副本同步1.webp" style="zoom:50%;" />
+<img src="/消息队列/kafka/images/副本同步1.webp" style="zoom:50%;" />
 
 1. 消息还在继续写入，Leader的LEO值又发生了变化，两个Follower也各自拉取到了自己的消息，于是更新自己的LEO值，但是这时候Leader的HW依然没有改变。
 
-<img src="/消息队列/images/副本同步2.webp" style="zoom:50%;" />
+<img src="/消息队列/kafka/images/副本同步2.webp" style="zoom:50%;" />
 
 1. Follower再次向Leader拉取数据，这时候Leader会更新自己的HW值，取Follower中的最小的LEO值来更新。
 
-<img src="/消息队列/images/副本同步3.webp" style="zoom:50%;" />
+<img src="/消息队列/kafka/images/副本同步3.webp" style="zoom:50%;" />
 
 1. Leader响应自己的HW给Follower，Follower更新自己的HW值，因为又拉取到了消息，所以再次更新LEO，流程以此类推。
 
-<img src="/消息队列/images/副本同步4.webp" style="zoom:50%;" />
+<img src="/消息队列/kafka/images/副本同步4.webp" style="zoom:50%;" />
 
 ## 16. 新版本Kafka为什么抛弃了Zookeeper
 
