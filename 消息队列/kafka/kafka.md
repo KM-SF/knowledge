@@ -657,6 +657,8 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最⼩的节点�
 
 ## 3. HW和LEO
 
+### 3.1 介绍
+
 ![HW&LEO](/消息队列/kafka/images/HW&LEO.png)
 
 + HW俗称⾼⽔位，HighWatermark的缩写，取⼀个partition对应的ISR中**最⼩的LEO(log-end-offset)作为HW，consumer最多只能消费到HW所在的位置**
@@ -671,6 +673,39 @@ Kafka集群中的broker在zk中创建临时序号节点，序号最⼩的节点�
 + 高水位的作用主要有 2 个：
   + 定义消息可见性，即用来标识分区下的哪些消息是可以被消费者消费的。
   + 帮助 Kafka 完成副本同步。（重新选举后会将该新leader的hw作为标准，让其他主机的消息进行多退少补的操作）
+
+
+### 3.2 高水位和 LEO 的更新机制
+
+#### 3.2.1 Leader 副本
+
+**处理生产者请求的逻辑如下：**
+
+1. 写入消息到本地磁盘。
+
+2. 更新分区高水位值：
+   1. 获取 Leader 副本所在 Broker 端保存的所有远程副本 LEO 值（LEO-1，LEO-2，……，LEO-n）。
+   2. 获取 Leader 副本高水位值：currentHW。
+   3. 更新 currentHW = max{currentHW, min（LEO-1, LEO-2, ……，LEO-n）}。
+
+**处理 Follower 副本拉取消息的逻辑如下：**
+
+1. 读取磁盘（或页缓存）中的消息数据。
+2. 使用 Follower 副本发送请求中的位移值更新远程副本 LEO 值。
+3. 更新分区高水位值（具体步骤与处理生产者请求的步骤相同）。
+
+#### 3.2.2 Follower 副本
+
+**从 Leader 拉取消息的处理逻辑如下：**
+
+1. 写入消息到本地磁盘。
+
+2. 更新 LEO 值。
+
+3. 更新高水位值
+   1. 获取 Leader 发送的高水位值：currentHW。
+   2. 获取步骤 2 中更新过的 LEO 值：currentLEO。
+   3. 更新高水位为 min(currentHW, currentLEO)。
 
 # 九. kafka服务端
 
@@ -740,6 +775,13 @@ Broker 端参数unclean.leader.election.enable 控制是否允许 Unclean 领导
 务，因此提升了高可用性。**
 
 反之，禁止 Unclean 领导者选举的好处在于**维护了数据的一致性，避免了消息丢失，但牺牲了高可用性。**
+
+### 1.5 副本同步流程
+
+1. 首先是初始状态。下面这张图中的 remote LEO 就是刚才的远程副本的 LEO 值。在初始状态时，所有值都是 0。![](/消息队列/kafka/images/副本同步1.jpg)
+2. 当生产者给主题分区发送一条消息后，状态变更为：Leader 副本成功将消息写入了本地磁盘，故 LEO 值被更新为 1。![](/消息队列/kafka/images/副本同步2.jpg)
+3. Follower 再次尝试从 Leader 拉取消息。和之前不同的是，这次有消息可以拉取了，因此状态进一步变更为：Follower 副本也成功地更新 LEO 为 1。![](/消息队列/kafka/images/副本同步3.jpg)
+4. 此时，Leader 和 Follower 副本的 LEO 都是 1，但各自的高水位依然是 0，还没有被更新。它们需要在**下一轮的拉取中被更新**，在新一轮的拉取请求中，由于位移值是 0 的消息已经拉取成功，因此 Follower 副本这次请求拉取的是位移值 =1 的消息。Leader 副本接收到此请求后，更新远程副本 LEO 为 1，然后更新 Leader 高水位为 1。做完这些之后，它会将当前已更新过的高水位值 1 发送给 Follower 副本。Follower 副本接收到以后，也将自己的高水位值更新成 1。至此，一次完整的消息同步周期就结束了。事实上，Kafka 就是利用这样的机制，实现了 Leader 和 Follower 副本之间的同步。![](/消息队列/kafka/images/副本同步4.jpg)
 
 ## 2. Kafka 如何处理请求
 
