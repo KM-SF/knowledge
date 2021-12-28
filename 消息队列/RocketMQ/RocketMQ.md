@@ -1074,6 +1074,7 @@ public class SomeConsumer {
 ![](/消息队列/RocketMQ/images/分区有序.png)
 
 ```java
+// 生产者
 public class OrderedProducer {
   public static void main(String[] args) throws Exception {
     DefaultMQProducer producer = new DefaultMQProducer("pg");
