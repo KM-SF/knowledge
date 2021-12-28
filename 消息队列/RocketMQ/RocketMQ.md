@@ -682,7 +682,7 @@ Consumer在广播消费模式下offset相关数据以json的形式持久化到Co
 
 当消费模式为**集群消费**时，offset使用远程模式管理。因为所有Cosnumer实例对消息采用的是均衡消费，**所有Consumer共享Queue的消费进度。**  
 
-Consumer在集群消费模式下offset相关数据以json的形式持久化到**Broker磁盘文件中**，文件路径为当前用户主目录下的store/config/consumerOffset.json 。  
+Consumer在集群消费模式下offset相关数据以json的形式持久化到**Broker磁盘文件中**，文件路径为当前用户主目录下的**store/config/consumerOffset.json** 。  
 
 Broker启动时会加载这个文件，并写入到一个双层Map（ConsumerOffsetManager）。外层map的key为topic@group，value为内层map。内层map的key为queueId，value为offset。当发生Rebalance时，新的Consumer会从该Map中获取到相应的数据来继续消费。  
 
