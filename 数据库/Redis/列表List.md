@@ -16,9 +16,9 @@
 + lpush/rpush <key><value1><value2><value3>：从左边/右边插入元素
 + lpop/rpop <key> [count] 从左边/右边吐出一个值。值在健在，值光键亡
 +  rpoplpush <key1><key2>：从<key1>列表右边吐出一个值，插到<key2>列表左边
-+ lange <key><start><end>：按照索引下表获取元素（从左到右）
++ lrange <key><start><end>：按照索引下表获取元素（从左到右）
 + lindex <key><index>：按照索引下标获得元素（从左到右）
 + llen <key>：获得列表长度
 + linsert <key> befor|after <value> <newvalue>：在<value>前面或者后面插入一个newvalue
-+ lrem <key><n><value>：从左边删除n个value（从左往右）
++ lrem <key><n><value>：从删除n个value。n==0，删除全部。n>0，从左往右删除。n<0，从右往左删除
 + lset<key><index><value>：将列表key下标为index的值替换成value

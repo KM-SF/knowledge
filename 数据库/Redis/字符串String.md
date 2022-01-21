@@ -23,8 +23,8 @@
 + mset <key1> <value1> <key2> <value2><key3> <value3>：同时设置多个键值对
 + mget <key1><key2><key3>：同时获取多个value
 + msetnx <key1> <value1> <key2> <value2><key3> <value3>：同事设置多个键值对。当且仅当所有key不存在时，才执行成功。原子性操作，有一个失败则都失败
-+ getrange <key><start><end>：获取值得范围。索引从0开始
-+ setrange <key><start><value>：用value覆盖start起始位置的值。索引从0开始
++ getrange <key><start><end>：获取字符串中的子串[start, end]。下标从0开始，下标也可以是负数
++ setrange <key><start><value>：用value覆盖start起始位置的值。下标从0开始
 + setex <key><过期时间><value>：设置键值对的同事，设置过期时间，单位秒
 + getset <key><set>：以新换旧，设置新值同时获得旧值
 
