@@ -28,8 +28,6 @@ class Solution {
 };
 ```
 
-
-
 ## 子集
 
 ### 子集
@@ -417,3 +415,107 @@ class Solution {
 ```
 
 ### 下一个排列（TODO）
+
+## 应用题
+
+### 括号生成
+
++ 力扣22：[22. 括号生成](https://leetcode-cn.com/problems/generate-parentheses/)
+
+```
+数字 n 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且 有效的 括号组合。
+
+输入：n = 3
+输出：["((()))","(()())","(())()","()(())","()()()"]
+```
+
++ 题解
+  + 一定是先输入左括号，再输入右括号
+  + 用left和right分别表示左右括号剩余数量
+
+```cpp
+class Solution {
+  vector<string> ans;
+
+ public:
+  void dfs(int left, int right, string tmp) {
+    if (left == 0 && right == 0) {
+      ans.push_back(tmp);
+      return;
+    }
+    // 剩余 ‘(’ 的个数比 ‘)’ 要多则，不是配对的()，所以退出
+    if (left > right) return;
+
+    // 左括号剩余个数大于0则继续
+    // 先选择左括号
+    if (left > 0) {
+      dfs(left - 1, right, tmp + '(');
+    }
+
+    // 右括号剩余个数大于0则继续
+    // 在选择右括号
+    if (right > 0) {
+      dfs(left, right - 1, tmp + ')');
+    }
+  }
+  vector<string> generateParenthesis(int n) {
+    dfs(n, n, "");
+    return ans;
+  }
+};
+```
+
+### 电话号码的字母组合
+
++ 力扣17：[电话号码的字母组合](https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/)
+
+```
+给定一个仅包含数字 2-9 的字符串，返回所有它能表示的字母组合。答案可以按 任意顺序 返回。
+给出数字到字母的映射如下（与电话按键相同）。注意 1 不对应任何字母。
+
+输入：digits = "23"
+输出：["ad","ae","af","bd","be","bf","cd","ce","cf"]
+
+提示：
+0 <= digits.length <= 4
+digits[i] 是范围 ['2', '9'] 的一个数字。
+```
+
++ 题解
+  + 先建立数字对应的所有可能字符
+  + 然后遍历每个数字
+  + 对数字的所有可能字符都分两种情况：选择和不选择处理
+
+```cpp
+class Solution {
+  vector<string> ans;
+
+ public:
+  void dfs(string& digits, int i, unordered_map<char, string>& mp,
+           string& tmp) {
+    if (tmp.length() == digits.size()) {
+      ans.push_back(tmp);
+      return;
+    }
+    char ch = digits[i];
+
+    // 遍历当前数字所有可能的字符
+    for (int idx = 0; idx < mp[ch].length(); idx++) {
+      tmp.push_back(mp[ch][idx]);   // 选择当前字符
+      dfs(digits, i + 1, mp, tmp);  // 处理下个数字
+      tmp.pop_back();               // 不选择当前字符
+    }
+  }
+  vector<string> letterCombinations(string digits) {
+    if (digits.length() == 0) return ans;
+    // 建立数字对应的所有可能字符
+    unordered_map<char, string> mp{{'2', "abc"}, {'3', "def"}, {'4', "ghi"},
+                                   {'5', "jkl"}, {'6', "mno"}, {'7', "pqrs"},
+                                   {'8', "tuv"}, {'9', "wxyz"}};
+    string tmp;
+    dfs(digits, 0, mp, tmp);
+    return ans;
+  }
+};
+```
+
