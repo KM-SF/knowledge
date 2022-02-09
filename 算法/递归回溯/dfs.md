@@ -1,6 +1,6 @@
 ## 总结
 
-+ 画出二叉树的结果图，选与不选的情况
++ 画出二叉树的结果图，选与不选的情况。二叉树的递归遍历
 + 模板
 
 ```cpp
@@ -519,3 +519,263 @@ class Solution {
 };
 ```
 
+### 复原 IP 地址
+
++ 力扣93：[复原 IP 地址](https://leetcode-cn.com/problems/restore-ip-addresses/)
+
+```
+有效 IP 地址 正好由四个整数（每个整数位于 0 到 255 之间组成，且不能含有前导 0），整数之间用 '.' 分隔。
+给定一个只包含数字的字符串 s ，用以表示一个 IP 地址，返回所有可能的有效 IP 地址，这些地址可以通过在 s 中插入 '.' 来形成。你不能重新排序或删除 s 中的任何数字。你可以按 任何 顺序返回答案。
+
+输入：s = "25525511135"
+输出：["255.255.11.135","255.255.111.35"]
+
+输入：s = "0000"
+输出：["0.0.0.0"]
+```
+
++ 题解：
+  + 字符串长度不在IP最大长度和最小长度范围【4~12】直接返回false
+  + 一个IP段符合范围【0~255】，长度大于1时不能以0开头
+  + 一个字符串最多切割成4个IP段
+  + 用一个begin表示开始的字符下标，这个IP段的范围为【begin，begin+3】
+
+```cpp
+class Solution {
+  vector<string> ans;
+
+ public:
+  bool isValidIpSegment(string &s, int left, int right) {
+    // 起始位0，不符合
+    if (right - left + 1 > 1 && s[left] == '0') return false;
+    // 截取这个IP段是否符合0~255
+    int num = atoi(s.substr(left, right - left + 1).c_str());
+    return num >= 0 && num <= 255;
+  }
+
+  /*
+  s：输入的字符串
+  begin：起始切割的位置
+  path：保存切割结果
+  split：剩余切割次数，一个IP只能切割4次
+  */
+  void dfs(string &s, int begin, vector<string> &path, int split) {
+    if (s.length() == begin) {
+      // 已经切割4次，且整个字符串都处理了，才是合格的IP
+      if (split == 0) {
+        string tmp;
+        for (auto elm : path) {
+          tmp += elm + '.';
+        }
+        tmp.pop_back();  // 去掉最后一个.
+        ans.push_back(tmp);
+      }
+      return;
+    }
+    if (split == 0) return;
+
+    // 计算剩余的字符串长度
+    // 剩余字符串长度 小于 剩余切割次数的话，不够切割直接退出
+    // 剩余字符串 大于 剩余切割次数*3（每次切割最多用3个字符）的话，那切割次数消耗完还有剩余字符串，不符合直接退出
+    int freeLen = s.length() - begin;
+    if (freeLen < split || split * 3 < freeLen) return;
+
+    // 从begin开始切割，切割1位，切割2位，切割3位
+    for (int i = begin; i < begin + 3; i++) {
+      // 如果要切割的位置大于字符串长度直接退出
+      if (i >= s.length()) break;
+
+      // begin~i之间的字符，符合ip段（0~255）
+      if (isValidIpSegment(s, begin, i)) {
+        // 选择这个区间
+        path.push_back(s.substr(begin, i - begin + 1));
+        dfs(s, i + 1, path, split - 1);
+        // 不选这个区间，选下个区间
+        path.pop_back();
+      }
+    }
+  }
+  vector<string> restoreIpAddresses(string s) {
+    // 字符串长度不在IP最大长度和最小长度范围直接返回false
+    if (s.length() < 4 || s.length() > 12) return ans;
+    vector<string> path;
+    // 一个IP只能切割4次
+    int split = 4;
+    dfs(s, 0, path, split);
+    return ans;
+  }
+};
+```
+
+## 岛屿问题
+
+### 岛屿数量
+
++ 力扣200：[岛屿数量](https://leetcode-cn.com/problems/number-of-islands/)
+
+```
+给你一个由 '1'（陆地）和 '0'（水）组成的的二维网格，请你计算网格中岛屿的数量。
+岛屿总是被水包围，并且每座岛屿只能由水平方向和/或竖直方向上相邻的陆地连接形成。
+此外，你可以假设该网格的四条边均被水包围。
+
+输入：grid = [
+  ["1","1","1","1","0"],
+  ["1","1","0","1","0"],
+  ["1","1","0","0","0"],
+  ["0","0","0","0","0"]
+]
+输出：1
+```
+
++ 题解：
+  + 向四个方向都访问，每次访问都将元素设置为0
+  + 循环遍历有几个出现1的情况就是有多少个岛屿
+
+```cpp
+class Solution {
+ public:
+  void dfs(vector<vector<char>>& grid, int i, int j) {
+    if (i < 0 || i >= grid.size() || j < 0 || j >= grid[0].size() ||
+        grid[i][j] == '0')
+      return;
+    grid[i][j] = '0';
+    dfs(grid, i - 1, j);
+    dfs(grid, i + 1, j);
+    dfs(grid, i, j - 1);
+    dfs(grid, i, j + 1);
+  }
+  int numIslands(vector<vector<char>>& grid) {
+    if (grid.size() <= 0) return 0;
+    int num = 0;
+    for (int i = 0; i < grid.size(); i++) {
+      for (int j = 0; j < grid[0].size(); j++) {
+        if (grid[i][j] != '0') {
+          num++;
+          dfs(grid, i, j);
+        }
+      }
+    }
+    return num;
+  }
+};
+```
+
+### 岛屿的最大面积
+
++ 力扣695：[岛屿的最大面积](https://leetcode-cn.com/problems/max-area-of-island/)
+
+```
+给你一个大小为 m x n 的二进制矩阵 grid 。
+岛屿 是由一些相邻的 1 (代表土地) 构成的组合，这里的「相邻」要求两个 1 必须在 水平或者竖直的四个方向上 相邻。你可以假设 grid 的四个边缘都被 0（代表水）包围着。
+岛屿的面积是岛上值为 1 的单元格的数目。
+计算并返回 grid 中最大的岛屿面积。如果没有岛屿，则返回面积为 0 。
+
+输入：grid = [
+[0,0,1,0,0,0,0,1,0,0,0,0,0],
+[0,0,0,0,0,0,0,1,1,1,0,0,0],
+[0,1,1,0,1,0,0,0,0,0,0,0,0],
+[0,1,0,0,1,1,0,0,1,0,1,0,0],
+[0,1,0,0,1,1,0,0,1,1,1,0,0],
+[0,0,0,0,0,0,0,0,0,0,1,0,0],
+[0,0,0,0,0,0,0,1,1,1,0,0,0],
+[0,0,0,0,0,0,0,1,1,0,0,0,0]]
+输出：6
+解释：答案不应该是 11 ，因为岛屿只能包含水平或垂直这四个方向上的 1 。
+```
+
++ 题解：
+  + 解法跟上面一样，只是多了一个参数统计当前岛屿的面积
+  + 每遍历一次就比较大小，得出遍历到当前岛屿最大面积
+
+```cpp
+class Solution {
+  int ans = 0;
+
+ public:
+  void dfs(vector<vector<int>>& grid, int i, int j, int& num) {
+    if (i < 0 || i >= grid.size() || j < 0 || j >= grid[0].size() ||
+        grid[i][j] == 0)
+      return;
+    grid[i][j] = 0;
+    num++;
+    dfs(grid, i - 1, j, num);
+    dfs(grid, i + 1, j, num);
+    dfs(grid, i, j - 1, num);
+    dfs(grid, i, j + 1, num);
+  }
+  int maxAreaOfIsland(vector<vector<int>>& grid) {
+    if (grid.size() <= 0) return 0;
+
+    for (int i = 0; i < grid.size(); i++) {
+      for (int j = 0; j < grid[0].size(); j++) {
+        if (grid[i][j] != 0) {
+          int num = 0;
+          dfs(grid, i, j, num);
+          ans = max(ans, num);
+        }
+      }
+    }
+    return ans;
+  }
+};
+```
+
+## 剑指offer
+
+### 剑指 Offer 12. 矩阵中的路径
+
++ 力扣：[剑指 Offer 12. 矩阵中的路径](https://leetcode-cn.com/problems/ju-zhen-zhong-de-lu-jing-lcof/)
+
+  ```
+  给定一个 m x n 二维字符网格 board 和一个字符串单词 word 。如果 word 存在于网格中，返回 true ；否则，返回 false 。
+  
+  单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。
+  
+  输入：board = [["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]], word = "ABCCED"
+  输出：true
+  
+  输入：board = [["a","b"],["c","d"]], word = "abcd"
+  输出：false
+  ```
+
++ 题解：（DFS）
+
+  + 上下左右分别遍历
+
+  ```c++
+  class Solution {
+  
+   public:
+    bool dfs(vector<vector<char>>& board, string word, int i, int j, int k) {
+      if (word.length() == k) return true;
+      if (i >= board.size() || i < 0) return false;
+      if (j >= board[i].size() || j < 0) return false;
+      if (board[i][j] != word[k]) return false;
+  
+      board[i][j] = '\0';    // 设置访问过
+      bool ret = dfs(board, word, i, j + 1, k + 1) ||
+                 dfs(board, word, i, j - 1, k + 1) ||
+                 dfs(board, word, i + 1, j, k + 1) ||
+                 dfs(board, word, i - 1, j, k + 1);
+      board[i][j] = word[k];	// 将字符设置回来，给下次遍历使用。
+      return ret;
+    }
+  
+    bool exist(vector<vector<char>>& board, string word) {
+      if (word.length() == 0) return true;
+      int m = board.size();
+      if (m == 0) return true;
+      int n = board[0].size();
+      if (n == 0) return true;
+      for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+          if (dfs(board, word, i, j, 0)) return true;
+        }
+      }
+  
+      return false;
+    }
+  };
+  ```
+
+  
