@@ -107,7 +107,7 @@ ROLLBACK TO a;
 
 + 一致性：基于原子性，隔离性和持久性完成
 
-### 持久性
+### 持久性（两阶段提交）
 
 + 两阶段提交（WAL write ahead log）：先写日志再写数据
 + mysql中的binlog（数据文件）和innodb中的redolog（日志文件），因为两个文件属于不同的组件，所以为了保证数据的一致性，要保证binlog和redolog一直，所以有了两阶段提交
