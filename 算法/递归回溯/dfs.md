@@ -607,6 +607,60 @@ class Solution {
 };
 ```
 
+### 分割回文串
+
++ 力扣131：[分割回文串](https://leetcode-cn.com/problems/palindrome-partitioning/)
+
+```
+给你一个字符串 s，请你将 s 分割成一些子串，使每个子串都是 回文串 。返回 s 所有可能的分割方案。
+回文串 是正着读和反着读都一样的字符串。
+
+输入：s = "aab"
+输出：[["a","a","b"],["aa","b"]]
+```
+
++ 题解
+  + 选与不选
+  + 如果s[i~idx]是回文字符串，则加入到path（选择）
+  + 从i+1开始下个递归（不选择）
+
+```cpp
+class Solution {
+  vector<vector<string>> ans;
+
+ public:
+  vector<vector<string>> partition(string s) {
+    vector<string> path;
+    dfs(s, 0, path);
+    return ans;
+  }
+
+  void dfs(string &s, int idx, vector<string> &path) {
+    if (idx == s.length()) {
+      ans.push_back(path);
+      return;
+    }
+    for (int i = idx; i < s.length(); i++) {
+      // 如果s[i~idx]是回文字符串，则加入到path中
+      // 从i+1开始下个递归
+      if (check(s, idx, i)) {
+        path.push_back(s.substr(idx, i - idx + 1));
+        dfs(s, i + 1, path);
+        path.pop_back();
+      }
+    }
+  }
+  bool check(string &s, int left, int right) {
+    while (left < right) {
+      if (s[left] != s[right]) return false;
+      left++;
+      right--;
+    }
+    return true;
+  }
+};
+```
+
 ## 岛屿问题
 
 ### 岛屿数量
