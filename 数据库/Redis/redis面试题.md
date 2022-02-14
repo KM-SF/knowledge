@@ -387,11 +387,36 @@ Redis Cluster是一种服务端sharding技术，3.0版本开始正式提供了�
 + 同一分片多个节点间的数据不保证强一致性
 + 读取数据时，当客户端操作的key没有分配在该节点上时，redis会返回转向指令，指向正确的节点
 + 扩容时需要把旧节点的数据迁移一部分到新节点
-
 + 在redis cluster架构下，每个redis要放开两个端口，例如：一个6379，另外一个就是加上1W的端口16379。另外一个端口是用来进行节点间通信的，也就是cluster bus的通信。用来进行故障检测，配置更新，故障转移授权。
 + cluster bus用了另外一种二进制的协议，gossip协议，用于节点间进行高效的数据交换，占用更少的网络带宽和处理时间
 
-#### 3.2 优缺点
+#### 3.3 Redis cluster 的高可用与主备切换原理
+
+Redis cluster 的高可用的原理，几乎跟哨兵是类似的。
+
+##### 3.3.1 判断节点宕机
+
+如果一个节点认为另外一个节点宕机，那么就是 `pfail` ，**主观宕机**。如果多个节点都认为另外一个节点宕机了，那么就是 `fail` ，**客观宕机**，跟哨兵的原理几乎一样，sdown，odown。
+
+在 `cluster-node-timeout` 内，某个节点一直没有返回 `pong` ，那么就被认为 `pfail` 。
+
+如果一个节点认为某个节点 `pfail` 了，那么会在 `gossip ping` 消息中， `ping` 给其他节点，如果**超过半数**的节点都认为 `pfail` 了，那么就会变成 `fail` 。
+
+##### 3.3.2 从节点过滤
+
+对宕机的 master node，从其所有的 slave node 中，选择一个切换成 master node。
+
+检查每个 slave node 与 master node 断开连接的时间，如果超过了 `cluster-node-timeout * cluster-slave-validity-factor` ，那么就**没有资格**切换成 `master` 。
+
+##### 3.3.3 从节点选举
+
+每个从节点，都根据自己对 master 复制数据的 offset，来设置一个选举时间，offset 越大（复制数据越多）的从节点，选举时间越靠前，优先进行选举。
+
+所有的 master node 开始 slave 选举投票，给要进行选举的 slave 进行投票，如果大部分 master node `（N/2 + 1）` 都投票给了某个从节点，那么选举通过，那个从节点可以切换成 master。
+
+从节点执行主备切换，从节点切换为主节点。
+
+#### 3.4 优缺点
 
 + 优点：
   + 无中心架构，支持动态扩容，对业务透明
@@ -810,9 +835,33 @@ ZREVRANGE hotNews:20190722 0 10 WITH SCORES  # 展示当日排行前十
 Incr article:readcnt:1001  # 对文章1001的读次数+1
 ```
 
+### 8. Redis里面有1亿个key，其中有10w个key是以某个固定的已知的前缀开头的，如何将它们全部找出来？
+
+使用keys指令可以扫出指定模式的key列表。
+
+对方接着追问：如果这个redis正在给线上的业务提供服务，那使用keys指令会有什么问题？
+
+这个时候你要回答redis关键的一个特性：
+
+redis的单线程的。keys指令会导致线程阻塞一段时间，线上服务会停顿，直到指令执行完毕，服务才能恢复。
+
+这个时候可以使用scan指令，scan指令可以无阻塞的提取出指定模式的key列表，但是会有一定的重复概率，在客户端做一次去重就可以了，但是整体所花费的时间会比直接用keys指令长。
+
+### 9. 异步队列
+
+一般使用list结构作为队列，rpush生产消息，lpop消费消息。当lpop没有消息的时候，要适当sleep一会再重试。
+如果对方追问可不可以不用sleep呢？list还有个指令叫blpop，在没有消息的时候，它会阻塞住直到消息到来。
+如果对方追问能不能生产一次消费多次呢？使用pub/sub主题订阅者模式，可以实现1:N的消息队列。
+如果对方追问pub/sub有什么缺点？在消费者下线的情况下，生产的消息会丢失，得使用专业的消息队列如rabbitmq等。
+
+### 10. 延时队列
+
+使用sortedset，拿时间戳作为score，消息内容作为key调用zadd来生产消息，消费者用zrangebyscore指令获取N秒之前的数据轮询进行处理。
+
 ------
 
 - [整理了2019年40道Redis高频面试题，答案详细解析](https://www.bilibili.com/read/cv4042105/)
 - [redis原理总结(很全面)](https://blog.csdn.net/wuyangyang555/article/details/82152005)
 - [Redis双写一致性、并发竞争、线程模型](https://www.imooc.com/article/297496)
+- https://www.cnblogs.com/crazymakercircle/p/13900198.html
 
