@@ -1,7 +1,5 @@
 # 一. Kafka介绍
 
-
-
 + Kafka是最初由Linkedin公司开发，是⼀个分布式、⽀持分区的（partition）、多副本的（replica），基于zookeeper（最新版已经不需要）协调的分布式消息系统，它的最⼤的特性就是可以实时的处理⼤量数据以满⾜各种需求场景。
 
 + Kafka 是一款开源的消息引擎系统。常见的两种消息传输模型如下：
@@ -894,3 +892,13 @@ Kafka 中使用的请求被延时处理的机制是分层时间轮算法**（多
 + 一般情况下，一个 Kafka主题有很多分区，每个分区就对应一个 Log 对象，在物理磁盘上则对应于一个子目录。比如你创建了一个双分区的主题 test-topic，那么，Kafka 在磁盘上会创建两个子目录：test-topic-0 和test-topic-1。而在服务器端，这就是两个 Log 对象。每个子目录下存在多组日志段，也就是多组.log、.index、.timeindex 文件组合，只不过文件名不同，因为每个日志段的起始位移不同。
 + 其中index文件保存的是：消息偏移+log文件的文件偏移+该消息大小。例如：要查找第三条数据（offset=3消息偏移）所对应的log文件的偏移（offset=756文件偏移）。然后使用的是二分查找法进行快速检索。
 + “.index”文件存储大量的索引信息，“.log”文件存储大量的数据，索引文件中的元数据指向对应数据文件中 message 的物理偏移地址。
+
+------
+
+参考：
+
+https://mp.weixin.qq.com/s/kImrkVLE4dtpVnb-Yp479Q
+
+https://mp.weixin.qq.com/s/YJFltTP4J5si1Z5SbuMUJw
+
+https://mp.weixin.qq.com/s/8wfZEsNDpeLr-_uu2CawFw
