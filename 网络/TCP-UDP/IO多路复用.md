@@ -81,7 +81,7 @@ struct pollfd {
     POLLWRNORM-数据可写
     POLLWRBAND-优先级带数据可写
     POLLERR 发生错误
-    POLLHUP 发生挂起
+    POLLHUP 发生挂起 
     POLLNVAL 描述字不是一个打开的文件
     
 nfds 监控数组中有多少文件描述符需要被监控
