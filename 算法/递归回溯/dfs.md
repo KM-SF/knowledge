@@ -347,7 +347,7 @@ class Solution {
     }
     for (int i = idx; i < nums.size(); i++) {
       swap(nums[i], nums[idx]);
-      dfs(nums, idx + 1);
+      dfs(nums, idx + 1);	// 注意这里
       swap(nums[idx], nums[i]);
     }
   }
