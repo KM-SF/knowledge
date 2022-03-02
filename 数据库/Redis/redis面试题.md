@@ -569,9 +569,29 @@ redis实例上的数据分布不均匀，某个实例上的数据特别多
 
 #### 1.4 如何优雅的删除大key
 
+DEL命令在删除单个集合类型的Key时，命令的时间复杂度是O(M)，其中M是集合类型Key包含的元素个数。阻塞删除key，导致Redis阻塞，出现故障切换和应用程序雪崩的故障。
+
+从Redis2.8版本开始支持SCAN命令，通过m次时间复杂度为O(1)的方式，遍历包含n个元素的大key.这样避免单个O(n)的大命令，导致Redis阻塞。 这里删除大key操作的思想也是如此。
+
 ##### 1.4.1 版本4之前
 
-以前 string，list，set，hash  不同数据类型的大 key，删除方式有所不同。一般有两种情况：del 命令删除单个很大的 key  和  del 批量删除 大 key。**直接 del 命令粗暴的删大 key 容易造成 redis 线程阻塞**。4.0 以前要优雅的删除就是针对不同的类型 写脚本，拆分链表，hash 表，分批删除。
+以前 string，list，set，hash  不同数据类型的大 key，删除方式有所不同。一般有两种情况：del 命令删除单个很大的 key  和  del 批量删除 大 key。**直接 del 命令粗暴的删大 key 容易造成 redis 线程阻塞**。4.0 以前要优雅的删除就是针对不同的类型 写脚本，拆分链表，hash 表，**分批删除**。
+
+> Hash类型的大key
+>
+> 通过[hscan命令](https://www.oschina.net/action/GoToLink?url=https%3A%2F%2Flink.juejin.im%2F%3Ftarget%3Dhttp%3A%2F%2Fredis.io%2Fcommands%2Fhscan)，每次获取500个字段，再用[hdel命令](https://www.oschina.net/action/GoToLink?url=https%3A%2F%2Flink.juejin.im%2F%3Ftarget%3Dhttp%3A%2F%2Fredis.io%2Fcommands%2Fhdel)，每次删除1个字段。
+
+> Set类型的大key
+>
+> 删除大set键，使用[sscan命令](https://www.oschina.net/action/GoToLink?url=https%3A%2F%2Flink.juejin.im%2F%3Ftarget%3Dhttp%3A%2F%2Fredis.io%2Fcommands%2Fsscan)，每次扫描集合中500个元素，再用[srem命令](https://www.oschina.net/action/GoToLink?url=https%3A%2F%2Flink.juejin.im%2F%3Ftarget%3Dhttp%3A%2F%2Fredis.io%2Fcommands%2Fsrem)每次删除一个键
+
+> list类型的大key
+>
+> 删除大的List键，未使用scan命令； 通过[ltrim命令](https://www.oschina.net/action/GoToLink?url=https%3A%2F%2Flink.juejin.im%2F%3Ftarget%3Dhttp%3A%2F%2Fredis.io%2Fcommands%2Fltrim)每次删除少量元素。
+
+> zset类型的大key
+>
+> 删除大的有序集合键，和List类似，使用sortedset自带的[zremrangebyrank命令](https://www.oschina.net/action/GoToLink?url=https%3A%2F%2Flink.juejin.im%2F%3Ftarget%3Dhttp%3A%2F%2Fredis.io%2Fcommands%2Fzremrangebyrank),每次删除top 100个元素。
 
 ##### 1.4.2 版本4之后
 
@@ -579,7 +599,7 @@ redis实例上的数据分布不均匀，某个实例上的数据特别多
 
 > **主动删除大 key**
 >
-> unlink 命令是  del 的异步版本，由 Lazyfree 机制实现。Lazyfree 机制的原理是在删除的时候只进行逻辑删除，把 key 释放操作放在 bio (Background I/O)单独的子线程中惰性处理，减少删除大 key 对 redis 主线程的阻塞，有效地避免因删除大key带来的性能问题。unlink 即使在批量删除 大 key 时，也不会对阻塞造成阻塞。
+> **unlink** 命令是  del 的异步版本，由 Lazyfree 机制实现。Lazyfree 机制的原理是在删除的时候只进行逻辑删除，把 key 释放操作放在 bio (Background I/O)单独的子线程中惰性处理，减少删除大 key 对 redis 主线程的阻塞，有效地避免因删除大key带来的性能问题。unlink 即使在批量删除 大 key 时，也不会对阻塞造成阻塞。
 
 > **被动删除大 key**
 >
