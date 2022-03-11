@@ -491,18 +491,18 @@ class Solution {
   vector<string> ans;
 
  public:
-  void dfs(string& digits, int i, unordered_map<char, string>& mp,
+  void dfs(string& digits, int idx, unordered_map<char, string>& mp,
            string& tmp) {
     if (tmp.length() == digits.size()) {
       ans.push_back(tmp);
       return;
     }
-    char ch = digits[i];
+    char ch = digits[idx];
 
     // 遍历当前数字所有可能的字符
-    for (int idx = 0; idx < mp[ch].length(); idx++) {
-      tmp.push_back(mp[ch][idx]);   // 选择当前字符
-      dfs(digits, i + 1, mp, tmp);  // 处理下个数字
+    for (int i = 0; idx < mp[ch].length(); idx++) {
+      tmp.push_back(mp[ch][i]);   // 选择当前字符
+      dfs(digits, idx + 1, mp, tmp);  // 处理下个数字
       tmp.pop_back();               // 不选择当前字符
     }
   }
