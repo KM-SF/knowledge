@@ -227,3 +227,143 @@ C/S模型-TCP：![C/S模型-TCP](/网络/images/CS模型（TCP）.png)
 
 > 多进程服务器：主进程先fork一个子进程去监听客户端登录，然后主进程去回收子进程资源。当有客户端登录时则再fork一个进程专门处理这个客户端的read和write。[服务端代码](/网络/code/tcp/process_server.c)
 
+# 半连接队列和全连接队列
+
+https://mp.weixin.qq.com/s?__biz=MzAwNDA2OTM1Ng==&mid=2453143470&idx=2&sn=70001ece183a7895a3775ea28a366f0f&scene=21#wechat_redirect
+
+在 TCP 三次握手的时候，Linux 内核会维护两个队列，分别是：
+
+- 半连接队列，也称 SYN 队列；
+- 全连接队列，也称 accepet 队列；
+
+服务端收到客户端发起的 SYN 请求后，**内核会把该连接存储到半连接队列**，并向客户端响应 SYN+ACK，接着客户端会返回 ACK，服务端收到第三次握手的 ACK 后，**内核会把连接从半连接队列移除，然后创建新的完全的连接，并将其添加到 accept 队列，等待进程调用 accept 函数时把连接取出来。**
+
+不管是半连接队列还是全连接队列，都有最大长度限制，超过限制时，内核会直接丢弃，或返回 RST 包。
+
+![](/网络/images/半连接和全连接.png)
+
+## 全连接队列溢出
+
+### 测试命令
+
+在服务端可以使用 `ss` 命令，来查看 TCP 全连接队列的情况：
+
+但需要注意的是 `ss` 命令获取的 `Recv-Q/Send-Q` 在「LISTEN 状态」和「非 LISTEN 状态」所表达的含义是不同的。从下面的内核代码可以看出区别：
+
+> 在「LISTEN 状态」时，`Recv-Q/Send-Q` 表示的含义如下：
+>
+> - Recv-Q：当前全连接队列的大小，也就是当前已完成三次握手并等待服务端 `accept()` 的 TCP 连接个数；
+> - Send-Q：当前全连接最大队列长度，上面的输出结果说明监听 8088 端口的 TCP 服务进程，最大全连接长度为 128；
+
+> 在「非 LISTEN 状态」时，`Recv-Q/Send-Q` 表示的含义如下：
+>
+> - Recv-Q：已收到但未被应用进程读取的字节数；
+> - Send-Q：已发送但未收到确认的字节数；
+
+**当超过了 TCP 最大全连接队列，服务端则会丢掉后续进来的 TCP 连接**，丢掉的 TCP 连接的个数会被统计起来，我们可以使用 netstat -s 命令来查看：netstat -s |grep overflowed
+
+**当服务端并发处理大量请求时，如果 TCP 全连接队列过小，就容易溢出。发生 TCP 全连接队溢出的时候，后续的请求就会被丢弃，这样就会出现服务端请求数量上不去的现象。**
+
+### 溢出处理情况
+
+**实际上，丢弃连接只是 Linux 的默认行为，我们还可以选择向客户端发送 RST 复位报文，告诉客户端连接已经建立失败。**
+
+tcp_abort_on_overflow 共有两个值分别是 0 和 1，其分别表示：
+
+```
+cat /proc/sys/net/ipv4/tcp_abort_on_overflow
+```
+
+- 0 ：表示如果全连接队列满了，那么 server 扔掉 client  发过来的 ack ；
+- 1 ：表示如果全连接队列满了，那么 server 发送一个 `reset` 包给 client，表示废掉这个握手过程和这个连接；
+
+如果要想知道客户端连接不上服务端，是不是服务端 TCP 全连接队列满的原因，那么可以把 tcp_abort_on_overflow 设置为 1，这时如果在客户端异常中可以看到很多 `connection reset by peer` 的错误，那么就可以证明是由于服务端 TCP 全连接队列溢出的问题。
+
+通常情况下，应当把 tcp_abort_on_overflow 设置为 0，因为这样更有利于应对突发流量。
+
+举个例子，当 TCP 全连接队列满导致服务器丢掉了 ACK，与此同时，客户端的连接状态却是 ESTABLISHED，进程就在建立好的连接上发送请求。只要服务器没有为请求回复 ACK，请求就会被多次**重发**。如果服务器上的进程只是**短暂的繁忙造成 accept 队列满，那么当 TCP 全连接队列有空位时，再次接收到的请求报文由于含有 ACK，仍然会触发服务器端成功建立连接。**
+
+所以，tcp_abort_on_overflow 设为 0 可以提高连接建立的成功率，只有你非常肯定 TCP 全连接队列会长期溢出时，才能设置为 1 以尽快通知客户端。
+
+### 增大 TCP 全连接队列
+
+**TCP 全连接队列足最大值取决于 somaxconn 和 backlog 之间的最小值，也就是 min(somaxconn, backlog)**。
+
+- `somaxconn` 是 Linux 内核的参数，默认值是 128，可以通过 `/proc/sys/net/core/somaxconn` 来设置其值；
+- `backlog` 是 `listen(int sockfd, int backlog)` 函数中的 backlog 大小，Nginx 默认值是 511，可以通过修改配置文件设置其长度；
+
+## 半连接队列溢出
+
+### 测试
+
+很遗憾，TCP 半连接队列长度的长度，没有像全连接队列那样可以用 ss 命令查看。
+
+但是我们可以抓住 TCP 半连接的特点，就是服务端处于 `SYN_RECV` 状态的 TCP 连接，就是在 TCP 半连接队列。
+
+于是，我们可以使用如下命令计算当前 TCP 半连接队列长度：
+
+模拟 TCP 半连接溢出场景不难，实际上就是对服务端一直发送 TCP SYN 包，但是不回第三次握手 ACK，这样就会使得服务端有大量的处于 `SYN_RECV` 状态的 TCP 连接。
+
+这其实也就是所谓的 SYN 洪泛、SYN 攻击、DDos 攻击。
+
+### 溢出处理情况
+
+TCP 第一次握手（收到 SYN 包）时会被丢弃的三种条件：
+
+1. 如果半连接队列满了，并且没有开启 tcp_syncookies，则会丢弃；
+2. 若全连接队列满了，且没有重传 SYN+ACK 包的连接请求多于 1 个，则会丢弃；
+3. **如果没有开启 tcp_syncookies，并且 max_syn_backlog 减去 当前半连接队列长度小于 (max_syn_backlog >> 2)，则会丢弃；**
+
+**开启 syncookies 功能就可以在不使用 SYN 半连接队列的情况下成功建立连接**，在前面我们源码分析也可以看到这点，当开启了  syncookies 功能就不会丢弃连接。
+
+syncookies 是这么做的：服务器根据当前状态计算出一个值，放在己方发出的 SYN+ACK 报文中发出，当客户端返回 ACK 报文时，取出该值验证，如果合法，就认为连接建立成功，如下图所示。
+
+syncookies 参数主要有以下三个值：
+
+- 0 值，表示关闭该功能；
+- 1 值，表示仅当 SYN 半连接队列放不下时，再启用它；
+- 2 值，表示无条件开启功能；
+
+### 增大半连接队列
+
+**每个 Linux 内核版本「理论」半连接最大值计算方式会不同。**
+
++ 如果「当前半连接队列」**没超过**「理论半连接队列最大值」，但是**超过** max_syn_backlog - (max_syn_backlog >> 2)，那么处于 SYN_RECV 状态的最大个数就是 max_syn_backlog - (max_syn_backlog >> 2)；
+
++ 如果「当前半连接队列」**超过**「理论半连接队列最大值」，那么处于 SYN_RECV 状态的最大个数就是「理论半连接队列最大值」；
+
+### 如何防御 SYN 攻击？
+
+这里给出几种防御 SYN 攻击的方法：
+
+- 增大半连接队列；
+- 开启 tcp_syncookies 功能
+- 减少 SYN+ACK 重传次数
+
+#### 增大半连接队列
+
+**要想增大半连接队列，我们得知不能只单纯增大 tcp_max_syn_backlog 的值，还需一同增大 somaxconn 和 backlog，也就是增大全连接队列**。否则，只单纯增大 tcp_max_syn_backlog 是无效的。
+
+增大 tcp_max_syn_backlog 和 somaxconn 的方法是修改 Linux 内核参数：
+
+tcp_max_syn_backlog ：/proc/sys/net/ipv4/tpc_max_syn_backlog
+
+somaxconn : /proc/sys/net/ipv4/core/somaxconn
+
+backlog：这个就是listen时候的数值
+
+#### 开启 tcp_syncookies 功能
+
+开启 tcp_syncookies 功能的方式也很简单，修改 Linux 内核参数：
+
+echo 1 > /proc/sys/net/ipv4/tpc_max_syn_backlog
+
+#### 减少 SYN+ACK 重传次数
+
+当服务端受到 SYN 攻击时，就会有大量处于 SYN_REVC 状态的 TCP 连接，处于这个状态的 TCP 会重传 SYN+ACK ，当重传超过次数达到上限后，就会断开连接。
+
+那么针对 SYN 攻击的场景，我们可以减少 SYN+ACK 的重传次数，以加快处于 SYN_REVC 状态的 TCP 连接断开。
+
+# 重传、滑动窗口、流量控制、拥塞控制
+
+https://mp.weixin.qq.com/s?__biz=MzAwNDA2OTM1Ng==&mid=2453143215&idx=2&sn=e9e767ebcbd2fce4688ba71db4fbd32d&scene=21#wechat_redirect

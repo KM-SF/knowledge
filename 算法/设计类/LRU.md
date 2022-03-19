@@ -33,7 +33,6 @@
     + 用一个unordered_map保存。key为要查找的key，value为value所在的节点
 
   ```c++
-  
   struct Node {
     Node* pre_node;
     Node* next_node;
@@ -53,6 +52,7 @@
     Node* tail;	// 尾伪节点
     unordered_map<int, Node*> key_map;	// 保存key和node映射关系
     int total_capacity;
+    int cur_capacity;
   
    public:
     LRUCache(int capacity) {
@@ -136,7 +136,6 @@
     }
   
     void moveToHead(Node* cur_node) {
-      Node* cur_head = head->next_node;
       // 处理当前节点的前驱和后继
       removeNode(cur_node);
   
@@ -145,5 +144,4 @@
     }
   };
   ```
-
   
