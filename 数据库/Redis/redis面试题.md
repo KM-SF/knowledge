@@ -441,6 +441,7 @@ Redis cluster 的高可用的原理，几乎跟哨兵是类似的。
 + 缺点：
   + 由于sharding处理放在客户端，规模进一步扩大时给运维带来的挑战
   + 客户端sharding不支持动态增删。服务端redis实例群拓扑结构有变化时，每个客户端都需要更新调整。连接不能共享，当应用规模增大时，资源浪费制约优化
++ codis集群的原理就是客户端sharding：https://article.itxueyuan.com/7ed6KG
 
 ## 七. Redis拓展特性
 

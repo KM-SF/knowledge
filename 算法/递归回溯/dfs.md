@@ -197,20 +197,21 @@ class Solution {
 
  public:
   void dfs(vector<int>& candidates, int target, int idx, vector<int>& tmp) {
-    if (target < 0) return;
     if (target == 0) {
       ans.push_back(tmp);
       return;
     }
+    if (idx >= candidates.size() || target < 0) {
+      return;
+    }
     for (int i = idx; i < candidates.size(); i++) {
-      tmp.push_back(candidates[i]);  // 选择该值
-      // target减去该值，因为选上了该值。从i的位置开始下次递归，因为数值可以重复
-      dfs(candidates, target - candidates[i], i + 1, tmp);       
-      tmp.pop_back();  // 这里得target还是旧值
+      tmp.push_back(candidates[i]);
+      dfs(candidates, target - candidates[i], i, tmp);
+      tmp.pop_back();
     }
   }
   vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
-      vector<int> tmp;
+    vector<int> tmp;
     dfs(candidates, target, 0, tmp);
     return ans;
   }
