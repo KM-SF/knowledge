@@ -1,4 +1,6 @@
-### !!! Linux工具教程：https://linuxtools-rst.readthedocs.io/zh_CN/latest !!!
+#  Linux工具教程：
+
+https://linuxtools-rst.readthedocs.io/zh_CN/latest !!!
 
 # top
 
@@ -73,3 +75,28 @@
   - COMMAND：进程启动命令名称
 
 https://blog.csdn.net/zhangchenglikecc/article/details/52103737
+
+# buffer和cache
+
+## 1.buffer：
+
+buffer就是写入到磁盘。buffer是为了提高内存和硬盘（或其他I/O设备）之间的数据交换的速度而设计的。buffer将数据缓冲下来，解决速度慢和快的交接问题；速度快的需要通过缓冲区将数据一点一点传给速度慢的区域。例如：从内存中将数据往硬盘中写入，并不是直接写入，而是缓冲到一定大小之后刷入硬盘中。
+
+## 2.cache：
+
+cache就是从磁盘读取数据然后存起来方便以后使用。cache实现数据的重复使用，速度慢的设备需要通过缓存将经常要用到的数据缓存起来，缓存下来的数据可以提供高速的传输速度给速度快的设备。例如：将硬盘中的数据读取出来放在内存的缓存区中，这样以后再次访问同一个资源，速度会快很多。
+
+## 3.buffer和cache的特点
+
+### 共性：
+
+都属于内存，数据都是临时的，一旦关机数据都会丢失。
+
+### 差异：(先理解前两点，后两点有兴趣可以了解)
+
+1. buffer是要写入数据；cache是已读取数据。
+2. buffer数据丢失会影响数据完整性，源数据不受影响；cache数据丢失不会影响数据完整性，但会影响性能。
+3. 一般来说cache越大，性能越好，超过一定程度，导致命中率太低之后才会越大性能越低。buffer来说，空间越大性能影响不大，够用就行。cache过小，或者没有cache，不影响程序逻辑（高并发cache过小或者丢失导致系统忙死除外）。buffer过小有时候会影响程序逻辑，如导致网络丢包。
+4. cache可以做到应用透明，编写应用的可以不用管是否有cache，可以在应用做好之后再上cache。当然开发者显式使用cache也行。buffer需要编写应用的人设计，是程序的一部分。
+
+原文链接：https://blog.csdn.net/qq_27516841/article/details/99682823
