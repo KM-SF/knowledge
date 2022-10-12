@@ -38,7 +38,7 @@
 + 因此从更高层面上来看，producer通过网络发送消息到kafka集群，然后Consumer桶kafka集群获取消息进行消费
 + 服务端(brokers)和客户端(producer、consumer)之间通信通过TCP协议来完成
 
-![架构图](/消息队列/kafka/images/架构图.png)
+![架构图](images/架构图.png)
 
 # 二. Kafka基本使用
 

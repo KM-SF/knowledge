@@ -233,6 +233,8 @@ key-value形式。底层实现为一个字典（dict），也是redisdb用来存
 
 ## 三. Redis的过期键的删除策略
 
+https://www.cnblogs.com/bruceChan0018/p/15768823.html
+
 Redis是key-value的数据库，我们可以设置Redis中缓存的key过期时间。Redis的过期策略就是指当Reids中缓存中Key过期了，Redis如何处理
 
 + 惰性过期：只有当访问一个key时，才会判断key是否过期，过期则清理。该策略可以最大化的节省CPU资源，却对内存非常不友好。极端情况可能出现大量的过期key没有再次被访问，从而不会被删除，占用大量内存。
