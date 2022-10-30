@@ -606,6 +606,42 @@ class Solution {
     return ans;
   }
 };
+
+// 最简单版本
+class Solution {
+  vector<string> ans;
+
+ public:
+  bool isValidIp(string tmp) {
+    // IP段个数只会从0-255
+    if (tmp.length() <= 0 || tmp.length() > 3) return false;
+    // 如果该IP段长度大于1且以0 
+    if (tmp.length() > 1 && tmp[0] == '0') return false;
+    int num = atoi(tmp.c_str());
+    return (num >= 0 && num <= 255);
+  }
+  // 原字符串，遍历的索引，剩余IP段数，拼接的IP
+  void dfs(string s, int idx, int segment, string tmp) {
+    if (segment == 0 && idx >= s.length()) {
+      tmp.pop_back();	// 弹出最后一个.
+      ans.push_back(tmp);
+      return;
+    }
+    if (idx >= s.length() || segment==0) return;
+    // 从idx开始切割，切割1位，切割2位，切割3位。因为一个IP段最多3位数
+    for (int i = idx; i < idx + 3; i++) {
+      if (i >= s.length()) break;
+      string subStr = s.substr(idx, i - idx + 1);
+      if (isValidIp(subStr)) {
+        dfs(s, i + 1, segment - 1, tmp + subStr + ".");
+      }
+    }
+  }
+  vector<string> restoreIpAddresses(string s) {
+    dfs(s, 0, 4, "");
+    return ans;
+  }
+};
 ```
 
 ### 分割回文串
